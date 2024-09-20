@@ -15,10 +15,11 @@ DEBUG = False
 
 MIN_SLICE_SIZE = 4
 MAX_SLICE_SIZE = 48
-MAX_DOWNSAMPLE_SIZE = 96
 
 # Suppress the specific warning about the number of workers
-warnings.filterwarnings("ignore", message=".*does not have many workers which may be a bottleneck.*")
+warnings.filterwarnings(
+    "ignore", message=".*does not have many workers which may be a bottleneck.*"
+)
 
 
 @dataclass
@@ -34,14 +35,14 @@ class TrainingConfig:
 def load_config(config_path: Optional[str] = None) -> TrainingConfig:
     if config_path is None:
         return TrainingConfig()
-    
+
     with open(config_path, "r") as f:
         config_dict = yaml.safe_load(f)
-    
+
     # Use default values for any missing keys
     default_config = asdict(TrainingConfig())
     default_config.update(config_dict)
-    
+
     return TrainingConfig(**default_config)
 
 
@@ -50,6 +51,7 @@ class VariableTensorSliceData:
     A dataset that returns a slice of random size from MIN_SLICE_SIZE
     to MAX_SLICE_SIZE, downsample with factor of 2 half of the time.
     """
+
     def __init__(self, tensor: torch.Tensor):
         self.tensor = tensor
 
@@ -61,14 +63,13 @@ class VariableTensorSliceData:
             # Downsample with factor of 2
             size = min(
                 torch.randint(2 * MIN_SLICE_SIZE, 2 * MAX_SLICE_SIZE + 1, (1,)).item(),
-                len(self) - 2 * key
+                len(self) - 2 * key,
             )
             return self.tensor[key : key + size : 2].float()
         else:
             # No downsampling
             size = min(
-                torch.randint(MIN_SLICE_SIZE, MAX_SLICE_SIZE + 1, (1,)).item(),
-                len(self) - key
+                torch.randint(MIN_SLICE_SIZE, MAX_SLICE_SIZE + 1, (1,)).item(), len(self) - key
             )
             return self.tensor[key : key + size].float()
 
@@ -77,9 +78,7 @@ class VariableTensorSliceData:
 class VectorMLMCollator:
     def __call__(self, examples: List[Tensor]) -> Dict[str, Tensor]:
         # Create padded tensor and return padding mask.
-        padded = torch.nn.utils.rnn.pad_sequence(
-            examples, batch_first=True, padding_value=-666.0
-        )
+        padded = torch.nn.utils.rnn.pad_sequence(examples, batch_first=True, padding_value=-666.0)
         padding_mask = padded[:, :, 0] != -666.0
         inputs = padded.clone()
 
@@ -112,10 +111,7 @@ class VectorMLMCollator:
             num_replacements = int((selected & (action == 1)).sum())
             random_indices = valid_indices[
                 torch.randint(
-                    low=0,
-                    high=valid_indices.size(0),
-                    size=[num_replacements],
-                    dtype=torch.int64
+                    low=0, high=valid_indices.size(0), size=[num_replacements], dtype=torch.int64
                 )
             ]
             inputs[selected & (action == 1)] = padded.view(-1, padded.shape[-1])[random_indices]
@@ -155,7 +151,7 @@ class VectorBert(torch.nn.Module):
         config: transformers.BertConfig,
         input_dim: int,
         dropout_rate: float = 0.1,
-        **kwargs: Any
+        **kwargs: Any,
     ):
         super().__init__()
         self.embed_in = torch.nn.Linear(input_dim, config.hidden_size)
@@ -181,7 +177,7 @@ class TrainHarness(pl.LightningModule):
         model: VectorBert,
         train_data: VariableTensorSliceData,
         validation_data: VariableTensorSliceData,
-        train_config: TrainingConfig
+        train_config: TrainingConfig,
     ):
         super().__init__()
         self.model = model
@@ -253,12 +249,20 @@ class TrainHarness(pl.LightningModule):
 
     def validation_step(self, batch: Dict[str, torch.Tensor], batch_idx: int) -> None:
         loss = self.forward_loss(batch)
-        self.log('val_loss', loss, on_step=False, on_epoch=True, prog_bar=True, logger=True, sync_dist=True)
+        self.log(
+            "val_loss",
+            loss,
+            on_step=False,
+            on_epoch=True,
+            prog_bar=True,
+            logger=True,
+            sync_dist=True,
+        )
         self.val_output_list.append(loss)
-    
+
     def on_validation_epoch_end(self) -> None:
         avg_loss = torch.stack(self.val_output_list).mean()
-        self.log('avg_validation_loss', avg_loss, prog_bar=False, logger=True, sync_dist=True)
+        self.log("avg_validation_loss", avg_loss, prog_bar=False, logger=True, sync_dist=True)
 
 
 if __name__ == "__main__":
@@ -273,22 +277,13 @@ if __name__ == "__main__":
     train_config = load_config(config_path)
 
     model_config = transformers.BertConfig(
-        position_embedding_type="relative",
-        attn_implementation="eager"
+        position_embedding_type="relative", attn_implementation="eager"
     )
 
-    train_tensors = torch.load(
-        train_data_path,
-        weights_only=True,
-        map_location="cpu",
-        mmap=True
-    )
+    train_tensors = torch.load(train_data_path, weights_only=True, map_location="cpu", mmap=True)
 
     validation_tensors = torch.load(
-        validation_data_path,
-        weights_only=True,
-        map_location="cpu",
-        mmap=True
+        validation_data_path, weights_only=True, map_location="cpu", mmap=True
     )
 
     train_data = VariableTensorSliceData(train_tensors)
@@ -297,11 +292,7 @@ if __name__ == "__main__":
     model = VectorBert(config=model_config, input_dim=256)
     harnessed_model = TrainHarness(model, train_data, validation_data, train_config=train_config)
 
-    early_stop_callback = EarlyStopping(
-        monitor="val_loss",
-        patience=3,
-        mode="min"
-    )
+    early_stop_callback = EarlyStopping(monitor="val_loss", patience=3, mode="min")
 
     csv_logger = pl.loggers.CSVLogger(".")
     csv_log_dir = csv_logger.log_dir
@@ -345,7 +336,7 @@ if __name__ == "__main__":
     trainer.fit(harnessed_model)
 
     trainer.save_checkpoint(f"{trained_model_path}.ckpt")
-    torch.save({
-        "model_state_dict": model.state_dict(),
-        "model_config": dict(model.config)
-    }, trained_model_path)
+    torch.save(
+        {"model_state_dict": model.state_dict(), "model_config": dict(model.config)},
+        trained_model_path,
+    )
