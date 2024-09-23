@@ -1,6 +1,7 @@
+import os
 import sys
 import warnings
-from dataclasses import asdict, dataclass
+from dataclasses import asdict, dataclass, field
 from typing import Any, Dict, List, Optional
 
 import lightning.pytorch as pl
@@ -9,7 +10,10 @@ import transformers
 import yaml
 from lightning.pytorch.callbacks import EarlyStopping, ModelCheckpoint
 from lightning.pytorch.tuner import Tuner
-from torch import Tensor, jit
+from torch import Tensor, jit, optim
+
+import dvc.api
+from utils import generate_codename
 
 DEBUG = False
 
@@ -24,12 +28,22 @@ warnings.filterwarnings(
 
 @dataclass
 class TrainingConfig:
-    lr: float = 1e-4
     batch_size: int = 1536
     max_epochs: int = 20
-    accumulate_grad_batches: int = 1
+    lr: float = 1e-4
     lr_warmup_ratio: float = 0.1
     lr_decay_ratio: float = 0.9
+    optimizer: str = "AdamW"
+    optimizer_kwargs: Dict[str, Any] = field(default_factory=lambda: {"betas": (0.9, 0.999)})
+    accumulate_grad_batches: int = 1
+
+
+@dataclass
+class VectorBertConfig:
+    bert_config: transformers.BertConfig
+    input_dim: int
+    dropout_rate: float = 0.1
+    additional_kwargs: dict = field(default_factory=dict)
 
 
 def load_config(config_path: Optional[str] = None) -> TrainingConfig:
@@ -154,6 +168,12 @@ class VectorBert(torch.nn.Module):
         **kwargs: Any,
     ):
         super().__init__()
+        self.config = VectorBertConfig(
+            bert_config=config,
+            input_dim=input_dim,
+            dropout_rate=dropout_rate,
+            additional_kwargs=kwargs,
+        )
         self.embed_in = torch.nn.Linear(input_dim, config.hidden_size)
         self.bert = transformers.BertModel(config, **kwargs)
         self.embed_out = torch.nn.Linear(config.hidden_size, input_dim)
@@ -176,19 +196,22 @@ class TrainHarness(pl.LightningModule):
         self,
         model: VectorBert,
         train_data: VariableTensorSliceData,
-        validation_data: VariableTensorSliceData,
+        val_data: VariableTensorSliceData,
         train_config: TrainingConfig,
     ):
         super().__init__()
         self.model = model
         self.train_data = train_data
-        self.validation_data = validation_data
+        self.val_data = val_data
         self.val_output_list: List[torch.Tensor] = []
         # Save all attributes of `train_config` as hparams
         self.save_hyperparameters(asdict(train_config))
 
     def configure_optimizers(self) -> Dict[str, Any]:
-        optimizer = torch.optim.AdamW(self.trainer.model.parameters(), lr=self.hparams.lr)
+        optimizer_class = getattr(optim, self.hparams.optimizer)
+        optimizer = optimizer_class(
+            self.model.parameters(), lr=float(self.hparams.lr), **self.hparams.optimizer_kwargs
+        )
 
         n_steps = self.trainer.estimated_stepping_batches
         n_warmup_steps = int(self.hparams.lr_warmup_ratio * n_steps)
@@ -207,6 +230,7 @@ class TrainHarness(pl.LightningModule):
         )
         return [optimizer], [{"scheduler": scheduler, "interval": "step"}]
 
+    # Data loaders
     def train_dataloader(self) -> torch.utils.data.DataLoader:
         return torch.utils.data.DataLoader(
             dataset=self.train_data,
@@ -220,7 +244,7 @@ class TrainHarness(pl.LightningModule):
 
     def val_dataloader(self) -> torch.utils.data.DataLoader:
         return torch.utils.data.DataLoader(
-            dataset=self.validation_data,
+            dataset=self.val_data,
             batch_size=self.hparams.batch_size,
             shuffle=False,
             collate_fn=VectorMLMCollator(),
@@ -229,6 +253,16 @@ class TrainHarness(pl.LightningModule):
             pin_memory=False if DEBUG else True,
         )
 
+    # Initialize DVC tracking
+    def on_fit_start(self):
+        self.logger.log_hyperparams(self.hparams)
+        path_to_model_summary = os.path.join(self.logger.log_dir, "model_summary.txt")
+        with open(path_to_model_summary, "w") as f:
+            f.write(str(self.model))
+        # Add model summary to DVC tracking
+        dvc.repo.Repo().add(path_to_model_summary)
+
+    # Forward pass and loss computation
     def forward_loss(self, batch: Dict[str, torch.Tensor]) -> torch.Tensor:
         targets = batch.pop("targets")
         selected = batch.pop("selected")
@@ -239,16 +273,19 @@ class TrainHarness(pl.LightningModule):
     def training_step(self, batch: Dict[str, torch.Tensor], batch_idx: int) -> torch.Tensor:
         loss = self.forward_loss(batch)
         lr = self.lr_schedulers().get_last_lr()[0]
-        info = {"loss": loss, "lr": lr}
-        self.log_dict(dictionary=info, on_step=True, prog_bar=True, logger=True)
+        # Log training loss and learning rate every training step
+        self.log_dict(
+            dictionary={"loss": loss, "lr": lr},
+            on_step=True,
+            prog_bar=True,
+            logger=True,
+            sync_dist=True,
+        )
         return loss
-
-    def on_validation_epoch_start(self) -> None:
-        super().on_validation_epoch_start()
-        self.val_output_list = []
 
     def validation_step(self, batch: Dict[str, torch.Tensor], batch_idx: int) -> None:
         loss = self.forward_loss(batch)
+        # Log validation loss once per validation epoch
         self.log(
             "val_loss",
             loss,
@@ -258,19 +295,16 @@ class TrainHarness(pl.LightningModule):
             logger=True,
             sync_dist=True,
         )
-        self.val_output_list.append(loss)
-
-    def on_validation_epoch_end(self) -> None:
-        avg_loss = torch.stack(self.val_output_list).mean()
-        self.log("avg_validation_loss", avg_loss, prog_bar=False, logger=True, sync_dist=True)
 
 
 if __name__ == "__main__":
     pl.seed_everything(123)
     torch.set_float32_matmul_precision("high")
 
+    repo = dvc.repo.Repo(".")
+
     train_data_path = sys.argv[1]
-    validation_data_path = sys.argv[2]
+    val_data_path = sys.argv[2]
     trained_model_path = sys.argv[3]
     config_path = sys.argv[4] if len(sys.argv) > 4 else None
 
@@ -281,21 +315,19 @@ if __name__ == "__main__":
     )
 
     train_tensors = torch.load(train_data_path, weights_only=True, map_location="cpu", mmap=True)
-
-    validation_tensors = torch.load(
-        validation_data_path, weights_only=True, map_location="cpu", mmap=True
-    )
+    val_tensors = torch.load(val_data_path, weights_only=True, map_location="cpu", mmap=True)
 
     train_data = VariableTensorSliceData(train_tensors)
-    validation_data = VariableTensorSliceData(validation_tensors)
+    val_data = VariableTensorSliceData(val_tensors)
 
     model = VectorBert(config=model_config, input_dim=256)
-    harnessed_model = TrainHarness(model, train_data, validation_data, train_config=train_config)
+    harnessed_model = TrainHarness(model, train_data, val_data, train_config=train_config)
 
     early_stop_callback = EarlyStopping(monitor="val_loss", patience=3, mode="min")
 
     csv_logger = pl.loggers.CSVLogger(".")
     csv_log_dir = csv_logger.log_dir
+
 
     checkpoint_callback = ModelCheckpoint(
         dirpath=csv_log_dir,
@@ -327,16 +359,21 @@ if __name__ == "__main__":
         new_lr = lr_finder.suggestion()
         print(f"Suggested learning rate: {new_lr}")
         harnessed_model.hparams.lr = new_lr
+        harnessed_model.save_hyperparameters()
     else:
         print("Learning rate finder failed. Using default learning rate.")
-
-    # Log the training configuration
-    csv_logger.log_hyperparams(dict(harnessed_model.hparams))
 
     trainer.fit(harnessed_model)
 
     trainer.save_checkpoint(f"{trained_model_path}.ckpt")
     torch.save(
-        {"model_state_dict": model.state_dict(), "model_config": dict(model.config)},
+        {"model_state_dict": model.state_dict(), "config": asdict(model.config)},
         trained_model_path,
     )
+
+    # Commit artifacts
+    repo.scm.add([trained_model_path, csv_log_dir])
+    repo.scm.commit(f"Train VectorBert model -- {generate_codename()}")
+
+    # Push to remote storage (if configured)
+    repo.push()

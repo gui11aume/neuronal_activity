@@ -1,0 +1,19 @@
+stages:
+  train:
+    cmd: > 
+      python pretrain_VectorBert.py
+      data/train_tensors.pt
+      data/validation_tensors.pt
+      models/trained_model.pt
+      config.yaml
+    deps:
+      - data/train_tensors.pt
+      - data/validation_tensors.pt
+      - config.yaml
+    outs:
+      - models/trained_model.pt
+    metrics:
+      - lightning_logs/version_*/metrics.csv:
+          cache: false
+      - lightning_logs/version_*/hparams.yaml:
+          cache: false
