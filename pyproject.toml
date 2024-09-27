@@ -4,7 +4,7 @@ version = "0.1.0"
 description = "A project for training VectorBert models using Lightning"
 authors = ["Guillaume Filion <guillaume.filion@gmail.com>"]
 readme = "README.md"
-packages = [{include = "neuronal_activity_project"}]
+packages = [{include = "src/neuronal_activity"}]
 
 [tool.poetry.dependencies]
 python = "^3.10"
