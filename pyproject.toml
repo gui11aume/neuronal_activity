@@ -7,23 +7,34 @@ readme = "README.md"
 packages = [{include = "src/neuronal_activity"}]
 
 [tool.poetry.dependencies]
-python = "^3.10"
-lightning = "^2.0.9"
-torch = "^2.0.1"
-transformers = "^4.31.0"
-tqdm = "^4.65.0"
+python = "^3.10"  # Requires Python 3.10 or higher
+lightning = "^2.0.9"  # PyTorch Lightning for easier deep learning
+torch = "^2.0.1"  # PyTorch for deep learning
+transformers = "^4.31.0"  # Hugging Face Transformers for NLP models
+tqdm = "^4.65.0"  # Progress bar library
+dvc = "^3.0.0"  # Data Version Control for managing data and ML pipelines
 
 [tool.poetry.group.dev.dependencies]
-pytest = "^7.4.0"
-ruff = "^0.1.0"
+pytest = "^7.4.0"  # Testing framework
+ruff = "^0.1.0"  # Fast Python linter and formatter
 
 [build-system]
 requires = ["poetry-core"]
 build-backend = "poetry.core.masonry.api"
 
 [tool.ruff]
-line-length = 100
-target-version = "py310"
+line-length = 100  # Maximum line length
+target-version = "py310"  # Target Python version for linting
+
+select = [
+    "E",  # pycodestyle errors
+    "W",  # pycodestyle warnings
+    "F",  # pyflakes
+    "I",  # isort
+    "C",  # flake8-comprehensions
+    "B",  # flake8-bugbear
+    "ANN",  # flake8-annotations (type hints)
+]
 
 # Exclude a variety of commonly ignored directories.
 exclude = [
@@ -52,7 +63,7 @@ exclude = [
 [tool.ruff.lint]
 # Enable Pyflakes (`F`) and a subset of the pycodestyle (`E`) codes by default.
 select = ["E", "F"]
-ignore = ["E203", "E266", "E501", "F403", "F401"]
+ignore = ["E203", "E266", "E501", "F403", "F401"]  # Ignore specific error codes
 
 # Allow autofix for all enabled rules (when `--fix`) is provided.
 fixable = ["A", "B", "C", "D", "E", "F"]
@@ -66,4 +77,8 @@ dummy-variable-rgx = "^(_+|(_+[a-zA-Z0-9_]*[a-zA-Z0-9]+?))$"
 max-complexity = 10
 
 [tool.ruff.lint.per-file-ignores]
-"__init__.py" = ["F401"]
+"__init__.py" = ["F401"]   # ignore unused imports in __init__.py files
+
+[tool.ruff.flake8-annotations]
+allow-star-arg-any = true  # Allow using '*args: Any' in type annotations
+suppress-none-returning = true  # Don't require explicit 'None' return type annotations

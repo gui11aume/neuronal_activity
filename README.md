@@ -4,20 +4,74 @@ Use BERT to model neuronal activity
 ## Setup Instructions
 
 1. Clone this repository and navigate to the project directory:
-   ```
+   ```bash
    git clone https://github.com/your-username/neuronal_activity.git
    cd neuronal_activity
    ```
 
-2. Install the required dependencies (this installs DVC as well):
-   ```
-   pip install -r requirements.txt
+2. Install pyenv (for Python version management):
+   ```bash
+   # Install pyenv dependencies
+   sudo apt-get update
+   sudo apt-get install -y make build-essential libssl-dev zlib1g-dev \
+   libbz2-dev libreadline-dev libsqlite3-dev wget curl llvm libncurses5-dev \
+   libncursesw5-dev xz-utils tk-dev libffi-dev liblzma-dev python3-openssl git
+
+   # Install pyenv
+   curl https://pyenv.run | bash
+
+   # Add pyenv to PATH (add these lines to your ~/.bashrc or ~/.zshrc)
+   echo 'export PYENV_ROOT="$HOME/.pyenv"' >> ~/.bashrc
+   echo 'export PATH="$PYENV_ROOT/bin:$PATH"' >> ~/.bashrc
+   echo 'eval "$(pyenv init --path)"' >> ~/.bashrc
+
+   # Reload your shell
+   source ~/.bashrc
    ```
 
-3. Enable DVC auto-staging (this should be done before any other operations):
+3. Install Poetry:
+   ```bash
+   # Install Poetry
+   curl -sSL https://install.python-poetry.org | python3 -
+
+   # Add Poetry to PATH (add this line to your ~/.bashrc or ~/.zshrc)
+   echo 'export PATH="$HOME/.local/bin:$PATH"' >> ~/.bashrc
+
+   # Reload your shell
+   source ~/.bashrc
    ```
-   dvc config core.autostage true
+
+4. Optionally, install the required Python version and project dependencies
+now (otherwise, this will run automatically the first time you call
+`make train`):
+   ```bash
+   # Install the required Python version
+   pyenv install $(cat .python-version)
+
+   # Set up the project environment, install dependencies, and configure DVC
+   make install
    ```
+## Development Setup
+
+### Pre-commit Hooks
+
+This project uses pre-commit hooks to ensure code quality and consistency. To set up the pre-commit hooks:
+
+1. Make sure you have pre-commit installed:
+   ```bash
+   pip install pre-commit
+   ```
+
+2. Install the git hook scripts:
+   ```bash
+   pre-commit install
+   ```
+
+3. (Optional) Run against all files:
+   ```bash
+   pre-commit run --all-files
+   ```
+
 
 ## Configuration
 
@@ -36,4 +90,3 @@ This command will execute the DVC pipeline defined in `dvc.yaml`, which includes
 
 - The `dvc.yaml` file defines the pipeline stages and their dependencies.
 - Training logs and model outputs will be saved in the `logs` and `models` directories respectively.
-- Use `dvc repro` to rerun the pipeline if you've made changes to the code or data.

@@ -3,18 +3,22 @@ VENV := .venv
 PYTHON_VERSION := $(shell awk -F'"' '/^python = / {print substr($$2, 2)}' pyproject.toml)
 PYTHON_EXECUTABLE := $(shell pyenv which python)
 
-.PHONY: setup install clean train
+.PHONY: setup install clean train setup-pyenv
+
+setup-pyenv:
+	pyenv local $(PYTHON_VERSION)
+	$(eval PYTHON_EXECUTABLE := $(shell pyenv which python))
 
 setup: $(VENV)
 
 $(VENV): pyproject.toml
-	pyenv local $(PYTHON_VERSION)
 	$(POETRY) env use $(PYTHON_EXECUTABLE)
 	$(POETRY) config virtualenvs.in-project true
 	touch $(VENV)
 
 install: $(VENV)
 	$(POETRY) install
+	$(POETRY) run dvc config core.autostage true
 
 clean:
 	rm -rf $(VENV)
