@@ -18,6 +18,7 @@ dvc = "^3.0.0"  # Data Version Control for managing data and ML pipelines
 ruff = "^0.1.0"  # Fast Python linter and formatter
 pytest = "^7.4.0"  # Testing framework
 pre-commit = "^2.20.0"  # Pre-commit hooks for code discipline
+virtualenv = "^20.0.0"  # Virtual environment creation for pre-commit hooks
 
 [build-system]
 requires = ["poetry-core"]
@@ -35,6 +36,11 @@ select = [
     "C",  # flake8-comprehensions
     "B",  # flake8-bugbear
     "ANN",  # flake8-annotations (type hints)
+    "UP",  # pyupgrade
+    "D",  # pycodestyle docstring
+    "P",  # pycodestyle spacing
+    "S",  # pycodestyle style
+    "B950",  # detect secrets
 ]
 
 # Exclude a variety of commonly ignored directories.

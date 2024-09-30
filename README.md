@@ -53,7 +53,7 @@ now (otherwise, this will run automatically the first time you call
    ```
 ## Development Setup
 
-This project uses [ruff](https://github.com/astral-sh/ruff) for linting, [pytest](https://docs.pytest.org/) for testing, [pre-commit hook](https://pre-commit.com/) to enforce code discipline and [DVC](https://dvc.org/) to manage data and models. To install the dependencies for development and the pre-commit hooks, run:
+This project uses [ruff](https://github.com/astral-sh/ruff) for linting, [pytest](https://docs.pytest.org/) for testing, [pre-commit hook](https://pre-commit.com/) and [virtualenv](https://virtualenv.pypa.io/) to enforce code discipline and [DVC](https://dvc.org/) to manage data and models. To install the dependencies for development and the pre-commit hooks, run:
 
 Install the git hook scripts:
    ```bash
