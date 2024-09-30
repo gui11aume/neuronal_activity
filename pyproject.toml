@@ -15,8 +15,9 @@ tqdm = "^4.65.0"  # Progress bar library
 dvc = "^3.0.0"  # Data Version Control for managing data and ML pipelines
 
 [tool.poetry.group.dev.dependencies]
-pytest = "^7.4.0"  # Testing framework
 ruff = "^0.1.0"  # Fast Python linter and formatter
+pytest = "^7.4.0"  # Testing framework
+pre-commit = "^2.20.0"  # Pre-commit hooks for code discipline
 
 [build-system]
 requires = ["poetry-core"]

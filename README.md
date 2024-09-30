@@ -29,7 +29,7 @@ Use BERT to model neuronal activity
    source ~/.bashrc
    ```
 
-3. Install Poetry:
+3. Install [Poetry](https://python-poetry.org/) (for Python package and dependency management):
    ```bash
    # Install Poetry
    curl -sSL https://install.python-poetry.org | python3 -
@@ -53,27 +53,15 @@ now (otherwise, this will run automatically the first time you call
    ```
 ## Development Setup
 
-### Pre-commit Hooks
+This project uses [ruff](https://github.com/astral-sh/ruff) for linting, [pytest](https://docs.pytest.org/) for testing, [pre-commit hook](https://pre-commit.com/) to enforce code discipline and [DVC](https://dvc.org/) to manage data and models. To install the dependencies for development and the pre-commit hooks, run:
 
-This project uses pre-commit hooks to ensure code quality and consistency. To set up the pre-commit hooks:
-
-1. Make sure you have pre-commit installed:
+Install the git hook scripts:
    ```bash
-   pip install pre-commit
-   ```
-
-2. Install the git hook scripts:
-   ```bash
-   pre-commit install
-   ```
-
-3. (Optional) Run against all files:
-   ```bash
-   pre-commit run --all-files
+   make install-dev
    ```
 
 
-## Configuration
+## Training Configuration
 
 You can modify the training parameters by editing the `config.yaml` file. This file contains various hyperparameters and settings for the model training process.
 
