@@ -1,7 +1,9 @@
 # neuronal_activity
 Use BERT to model neuronal activity
 
-## Setup Instructions
+## Getting Started
+
+### Setup Instructions
 
 1. Clone this repository and navigate to the project directory:
    ```bash
@@ -41,9 +43,7 @@ Use BERT to model neuronal activity
    source ~/.bashrc
    ```
 
-4. Optionally, install the required Python version and project dependencies
-now (otherwise, this will run automatically the first time you call
-`make train`):
+4. Install the required Python version and project dependencies
    ```bash
    # Install the required Python version
    pyenv install $(cat .python-version)
@@ -51,21 +51,13 @@ now (otherwise, this will run automatically the first time you call
    # Set up the project environment, install dependencies, and configure DVC
    make install
    ```
-## Development Setup
-
-This project uses [ruff](https://github.com/astral-sh/ruff) for linting, [pytest](https://docs.pytest.org/) for testing, [pre-commit hook](https://pre-commit.com/) and [virtualenv](https://virtualenv.pypa.io/) to enforce code discipline and [DVC](https://dvc.org/) to manage data and models. To install the dependencies for development and the pre-commit hooks, run:
-
-Install developer dependencies (including pre-commit hooks):
-   ```bash
-   make install-dev
-   ```
 
 
-## Training Configuration
+### Training Configuration
 
 You can modify the training parameters by editing the `config.yaml` file. This file contains various hyperparameters and settings for the model training process.
 
-## Running the Lightning Training Pipeline
+### Running the Training Pipeline
 
 To start the training process, simply run:
 ```
@@ -74,15 +66,26 @@ make train
 
 This command will execute the DVC pipeline defined in `dvc.yaml`, which includes data preparation and model training stages.
 
-## Additional Information
+### Additional Information
 
 - The `dvc.yaml` file defines the pipeline stages and their dependencies.
 - Training logs and model outputs will be saved in the `logs` and `models` directories respectively.
 
+## Development
+
+This project uses [Ruff](https://github.com/astral-sh/ruff) for linting, [pytest](https://docs.pytest.org/) for testing, [pre-commit hook](https://pre-commit.com/) and [virtualenv](https://virtualenv.pypa.io/) to enforce code discipline and [DVC](https://dvc.org/) to manage data and models. To install the dependencies for development and the pre-commit hooks, run:
+
+Install developer dependencies (including pre-commit hooks):
+   ```bash
+   make install-dev
+   ```
+
 
 ## Testing and Debugging
 
-This project uses pytest for testing. The `.vscode/launch.json` file is set up with configurations to help you run and debug tests easily. This file is located in the `.vscode` directory and contains predefined launch configurations for running tests and debugging.
+This project uses pytest for testing. The `.vscode/launch.json` file is set up with configurations to help you run and debug tests easily with [VS Code](https://code.visualstudio.com/) or [Cursor](https://cursor.sh/). This file is located in the `.vscode` directory and contains predefined launch configurations for running tests and debugging.
+
+The `Makefile` is also configured to run tests with `pytest`.
 
 ### Running All Tests
 
@@ -96,19 +99,19 @@ To run all tests, you have multiple options:
 
 2. Use VS Code's Test Explorer:
    - Open the Test Explorer view in VS Code (usually found in the sidebar).
-   - Click the "Run All Tests" button at the top of the Test Explorer.
+   - Click the `Run Tests` button at the top of the Test Explorer (double arrow icon).
 
-3. Use the "Python: Make Test" configuration:
+3. Use the `Python: Run tests` configuration:
    - Open the Run and Debug view in VS Code (Ctrl+Shift+D or Cmd+Shift+D).
    - Select "Python: Make Test" from the dropdown at the top.
    - Click the green play button or press F5 to run all tests.
 
 ### Running a Specific Test
 
-To run a specific test, you can use the "Python: Test dimensions_forward_pass" configuration as an example:
+To run a specific test, you can use the provided`Python: Test dimensions_forward_pass` configuration as an example:
 
-1. Open the Run and Debug view in VS Code.
-2. Select "Python: Test dimensions_forward_pass" from the dropdown.
+1. Open the Run and Debug view in VS Code (Ctrl+Shift+D or Cmd+Shift+D).
+2. Select `Python: Test single case (example)` from the dropdown.
 3. Click the green play button or press F5 to run this specific test.
 
 This configuration is defined in the `.vscode/launch.json` file and demonstrates how to run a single test function. You can create similar configurations for other specific tests you want to run or debug frequently.
@@ -117,19 +120,16 @@ This configuration is defined in the `.vscode/launch.json` file and demonstrates
 
 For more detailed information on how to use the debugger in VS Code and Cursor, you can refer to the following resources:
 
-1. VS Code Python Debugging:
-   - [Debugging Python in VS Code](https://code.visualstudio.com/docs/python/debugging)
-   - [Python debug configurations in VS Code](https://code.visualstudio.com/docs/python/debugging#_python-debug-configurations)
-
-2. Cursor Debugging:
-   - [Debugging in Cursor](https://cursor.sh/docs/debugging)
-   - [Advanced Debugging Features in Cursor](https://cursor.sh/docs/advanced-debugging)
+- [Debugging Python in VS Code](https://code.visualstudio.com/docs/python/debugging)
+- [Debugging in Cursor](https://cursor.sh/docs/debugging)
+- [Python debug configurations in VS Code](https://code.visualstudio.com/docs/python/debugging#_python-debug-configurations)
+- [Advanced Debugging Features in Cursor](https://cursor.sh/docs/advanced-debugging)
 
 These resources provide comprehensive guides on setting up and using the debugger, including how to set breakpoints, step through code, and inspect variables during runtime.
 
 # Code Discipline 💎
 
-This project uses [pre-commit](https://pre-commit.com/) to enforce code discipline. The pre-commit hook is configured in the `.pre-commit-config.yaml` file. The commit hooks should be running and up-to-date when you commit. If not, reinstall the dependencies with `make install-dev` or follow the instructions below.
+This project uses [pre-commit](https://pre-commit.com/) to enforce code discipline. The pre-commit hooks are configured in the `.pre-commit-config.yaml` file. The commit hooks should be running and up-to-date when you commit. If not, reinstall the dependencies with `make install-dev` or follow the instructions below.
 
 ## Installing the Commit Hooks Manually
 
@@ -145,14 +145,14 @@ If at some point the hooks become outdated, you can update them with:
 pre-commit autoupdate
 ```
 
-In some rare cases (e.g., when hooks are broken or when they get on the way of major changes), it may be necessary to skip the pre-commit hooks for one commit:
+In some rare cases (e.g., when hooks are broken or when they get on the way of major code refactoring), it may be necessary to skip the pre-commit hooks for one commit:
 
 ```bash
-git commit -m "Your commit message" --no-verify
+git commit -m "Your commit message with justification" --no-verify
 ```
 
-### Important Note
-*If you decide to skip the pre-commit hooks, make sure to document the reason in the commit message. Also note that the pre-commit hooks are also run in the CI/CD pipeline, so they will prevent merging if they fail.*
+**Important Note:**
+*If you use `--no-verify`, make sure to document the reason in the commit message. Also note that the pre-commit hooks are also run in the CI/CD pipeline, so they will prevent merging if they fail.*
 
 ## Running the Pre-commit Hooks Manually
 
@@ -191,7 +191,6 @@ The hooks include the following:
 - **end-of-file-fixer**: Ensures that files end with a newline or are empty.
 - **fix-byte-order-marker**: Removes UTF-8 byte order markers from files.
 - **mixed-line-ending**: Checks for and replaces mixed line endings in files.
-- **requirements-txt-fixer**: Sorts entries in `requirements.txt` files.
 - **trailing-whitespace**: Trims trailing whitespace from lines in files.
 
 ### GitHub Actions Hooks
@@ -215,7 +214,7 @@ The hooks include the following:
 
 ### Bandit Hook
 
-- **bandit**: Runs the Bandit security linter with configuration specified in `pyproject.toml`.
+- **bandit**: Runs the Bandit security linter with default settings.
 
 ### Detect Secrets Hook
 
@@ -223,20 +222,20 @@ The hooks include the following:
 
 ## Fixing Code Issues with Ruff
 
-Ruff is used to lint and fix code issues. To run Ruff with the default settings, you can use the following command:
+Ruff is used to lint and fix code issues. Running the Ruff pre-commit hook will lint and fix the issues automatically when possible. This is done automatically when running `git commit`, but you can also run it manually with the following command:
 
 ```bash
-poetry run ruff --fix <file-or-directory>
+pre-commit run ruff --files <file-name>
 ```
 
-Some issues sometimes persist and are not fixable by Ruff. In that case, you can use # noqa: <code> to ignore the issue.
+Some issues may persist and are not fixable by Ruff. In that case, you can add to the line that causes the issue a comment of the form `# noqa: <code>` to ignore the issue.
 
 ```python
 # Ignore "Standard pseudo-random generators are not suitable for cryptographic purposes
 random.choice(adjectives)   # noqa: S311
 ```
 
-You can also ignore issues for a whole file by adding # ruff: noqa: <code> to the top of the file. For instance, a test file allowing `assert` statements would start with:
+You can also ignore issues for a whole file by adding `# ruff: noqa: <code>` to the top of the file. For instance, a test file allowing `assert` statements would start with:
 
 ```python
 # ruff: noqa: S101
@@ -245,9 +244,9 @@ import pytest
 # ... rest of imports ...
 ```
 
+## Using LLMs to enforce code discipline
 
-
-## Useful Prompts
+It is recommended to use LLMs to help with code discipline. Below are some prompts that can be used to help with the most common tasks.
 
 ### Commit Messages
 
@@ -274,7 +273,7 @@ Bullet point for distinct change 2
 
 ### Docstrings
 
-Use the following prompt to write or update docstrings for all the functions:
+Use the following prompt to write or update docstrings for all the functions (this addresses most D issues with Ruff):
 
 ```
 Write or update docstrings for all the functions following the Google format. The docstrings must adhere to PEP 257 conventions and must pass all pydocstyle checks. The docstrings should include a one-line summary, followed by a more detailed description if necessary. Include sections for parameters, return values, and any raised exceptions, but do not add dashed lines under 'Args:', 'Returns:', or 'Raises:' headings. Use triple double quotes for the docstring. Follow the PEP 727 guidelines and do not add type information. Ensure the docstrings are concise yet informative, focusing on the function's purpose and behavior rather than implementation details.
@@ -298,6 +297,8 @@ Raises:
 ```
 
 ### Naming Conventions
+
+Use the following prompt to review and update the code to ensure all function and class names adhere to PEP 8 naming conventions (this addresses most N issues with Ruff):
 
 ```
 Review and update the code to ensure all function and class names adhere to PEP 8 naming conventions. Specifically: 1. Use snake_case for function names (all lowercase with underscores between words). 2. Use CapWords (PascalCase) for class names. 3. Ensure that any acronyms in names follow the appropriate capitalization rules (e.g., HttpResponse rather than HTTPResponse for classes, http_response for functions). 4. Avoid single character names except for counters or iterators. 5. Don't use names that conflict with Python keywords or built-in functions.
