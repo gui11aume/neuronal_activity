@@ -40,7 +40,7 @@ repos:
     rev: v0.6.8
     hooks:
       - id: ruff
-        args: [--config=pyproject.toml] # Runs Ruff linter with configuration from pyproject.toml
+        args: [--fix, --config=pyproject.toml] # Runs Ruff linter with configuration from pyproject.toml
       - id: ruff-format
         args: [--config=pyproject.toml] # Runs Ruff formatter with configuration from pyproject.toml
 
@@ -58,13 +58,7 @@ repos:
     rev: 1.7.10
     hooks:
       - id: bandit
-        args: ["-c", "pyproject.toml"] # Runs Bandit security linter with configuration from pyproject.toml
-
-  - repo: https://github.com/PyCQA/pylint
-    rev: v3.3.1
-    hooks:
-      - id: pylint
-        args: [--rcfile=pyproject.toml] # Runs Pylint with configuration from pyproject.toml
+        args: ["-f", "custom", "-o", "bandit-report.txt", "-x", "tests/", "--recursive"]
 
   - repo: https://github.com/Yelp/detect-secrets
     rev: v1.5.0

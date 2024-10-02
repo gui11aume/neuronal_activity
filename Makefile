@@ -3,7 +3,7 @@ VENV := .venv
 PYTHON_VERSION := $(shell awk -F'"' '/^python = / {print substr($$2, 2)}' pyproject.toml)
 PYTHON_EXECUTABLE := $(shell pyenv which python)
 
-.PHONY: setup install clean train
+.PHONY: install install-dev clean train test
 
 $(VENV): pyproject.toml
 	pyenv local $(PYTHON_VERSION)
@@ -32,3 +32,19 @@ clean:
 # Run the training process using DVC, ensuring the setup is completed first
 train: install
 	$(POETRY) run CUDA_VISIBLE_DEVICES=0 dvc repro
+
+# Run tests using pytest
+test: install-dev
+	$(POETRY) run pytest tests/
+
+# Run tests using pytest and generate XML report
+test-ci: install-dev
+	$(POETRY) run pytest tests/ --junitxml=pytest.xml
+
+# Run a single file (example)
+test-one-file: install-dev
+	$(POETRY) run pytest tests/test_pretrain_VectorBert.py
+
+# Run a single case (example)
+test-one-case: install-dev
+	$(POETRY) run pytest tests/test_pretrain_VectorBert.py::test_dimensions_forward_pass

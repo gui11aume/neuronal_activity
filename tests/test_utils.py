@@ -1,19 +1,31 @@
-import random
+# ruff: noqa: S101
+import pytest
+
+from src.neuronal_activity.utils import generate_codename
 
 
-def generate_codename() -> str:
+@pytest.mark.parametrize("_", range(100))
+@pytest.mark.usefixtures("_")
+def test_generate_codename_content() -> None:
     """
-    Generate a random codename.
+    Test the content of generated codenames.
 
-    Creates a codename by combining a random adjective and a random noun
-    from predefined lists, separated by a hyphen.
+    Verifies that the generated codename consists of an adjective and a noun
+    from predefined lists. This test is parameterized to run multiple times.
 
-    Returns
-    -------
-        A string representing the generated codename.
+    Args:
+        _: Unused parameter for parameterized testing.
+
+    Raises:
+        AssertionError: If the generated codename does not match the expected format
+            or if the adjective or noun is not from the predefined lists.
 
     """
-    adjectives: list[str] = [
+    codename = generate_codename()
+    adjective, noun = codename.split("-")
+
+    # Test that the adjective is from the predefined list
+    assert adjective in [
         "adventurous",
         "bold",
         "brave",
@@ -69,7 +81,9 @@ def generate_codename() -> str:
         "zany",
         "zealous",
     ]
-    nouns: list[str] = [
+
+    # Test that the noun is from the predefined list
+    assert noun in [
         "alligator",
         "anteater",
         "armadillo",
@@ -133,8 +147,3 @@ def generate_codename() -> str:
         "woodpecker",
         "zebra",
     ]
-
-    adjective: str = random.choice(adjectives)  # noqa: S311 # nosec: B311
-    noun: str = random.choice(nouns)  # noqa: S311 # nosec: B311
-
-    return f"{adjective}-{noun}"

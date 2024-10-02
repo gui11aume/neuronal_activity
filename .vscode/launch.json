@@ -1,0 +1,32 @@
+{
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "name": "Python: Run tests",
+            "type": "python",
+            "request": "launch",
+            "module": "pytest",
+            "args": ["tests/"],
+            "cwd": "${workspaceFolder}",
+            "console": "integratedTerminal"
+        },
+        {
+            "name": "Python: Test single file (example)",
+            "type": "python",
+            "request": "launch",
+            "module": "pytest",
+            "args": ["tests/test_pretrain_VectorBert.py"],
+            "cwd": "${workspaceFolder}",
+            "console": "integratedTerminal"
+        },
+        {
+            "name": "Python: Test single case (example)",
+            "type": "python",
+            "request": "launch",
+            "module": "pytest",
+            "args": ["tests/test_pretrain_VectorBert.py::test_dimensions_forward_pass"],
+            "cwd": "${workspaceFolder}",
+            "console": "integratedTerminal"
+        }
+    ]
+}
