@@ -87,19 +87,37 @@ This project uses [VS Code](https://code.visualstudio.com/) or [Cursor](https://
 1. Install the Ruff extension:
    Search for `Ruff` in the Extensions marketplace and install it.
 
-2. The `.vscode/settings.json` file already includes Ruff configuration. It should contain:
+2. The `.vscode/settings.json` file already includes Ruff configuration. It should contain something similar to the following:
+
    ```json
    {
-     "python.linting.enabled": true,
-     "python.linting.ruffEnabled": true,
-     "editor.formatOnSave": true,
-     "editor.codeActionsOnSave": {
-       "source.fixAll.ruff": true
-     }
+       "python.testing.pytestArgs": [
+           "tests"
+       ],
+       "python.testing.unittestEnabled": false,
+       "python.testing.pytestEnabled": true,
+       "editor.formatOnSave": true,
+       "[python]": {
+           "editor.defaultFormatter": "charliermarsh.ruff",
+           "editor.codeActionsOnSave": {
+               "source.fixAll": "explicit",
+               "source.organizeImports": "explicit"
+           }
+       },
+       "ruff.enable": true,
+       "ruff.organizeImports": true,
+       "ruff.fixAll": true,
+       "ruff.importStrategy": "fromEnvironment",
+       "ruff.path": ["${workspaceFolder}/.venv/bin/ruff"],
+       "ruff.interpreter": ["${workspaceFolder}/.venv/bin/python"],
+       "ruff.nativeServer": "off"
    }
    ```
 
 3. Restart VS Code or Cursor to apply the changes.
+
+**Important Note:**
+*It is critical to check that the Ruff version installed in the repository is the same as the one in the pre-commit hook. This is done by the commit hook `check-ruff-version`.*
 
 Now, Ruff will automatically lint and format your Python code on save, ensuring consistent code style and catching potential issues early in development.
 
@@ -203,6 +221,7 @@ The hooks include the following:
 
 ### General Hooks
 
+- **check-ruff-version**: Checks pre-commit hook and repository use the same Ruff version.
 - **check-toml**: Validates the syntax of TOML files to ensure they are parseable.
 - **check-json**: Validates the syntax of JSON files to ensure they are parseable.
 - **check-added-large-files**: Prevents the addition of large files to the repository.
@@ -315,6 +334,7 @@ Returns:
 
 Raises:
     KeyError: Description of the exception raised.
+
 """
 ```
 

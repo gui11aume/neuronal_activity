@@ -1,3 +1,5 @@
+"""Test cases for the utils module."""
+
 import pytest
 
 from src.neuronal_activity.utils import generate_codename
@@ -6,8 +8,7 @@ from src.neuronal_activity.utils import generate_codename
 @pytest.mark.parametrize("_", range(100))
 @pytest.mark.usefixtures("_")
 def test_generate_codename_content() -> None:
-    """
-    Test the content of generated codenames.
+    """Test the content of generated codenames.
 
     Verifies that the generated codename consists of an adjective and a noun
     from predefined lists. This test is parameterized to run multiple times.

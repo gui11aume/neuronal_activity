@@ -1,5 +1,4 @@
-"""
-Implement the VectorBert model and its training harness.
+"""Implement the VectorBert model and its training harness.
 
 VectorBert is a BERT-based model adapted for processing vector data. The module
 includes classes for data handling, model architecture, and training pipeline
@@ -25,6 +24,7 @@ from safetensors.torch import save_file
 from torch import Tensor, jit, optim
 
 from neuronal_activity.utils import generate_codename
+
 
 DEBUG = False
 
@@ -64,8 +64,7 @@ class VectorBertConfig:
 
 
 def load_config(config_path: str | None = None) -> TrainingConfig:
-    """
-    Load training configuration from a YAML file or return default config.
+    """Load training configuration from a YAML file or return default config.
 
     If no config path is provided, returns the default configuration.
     If a config path is provided, loads the configuration from the YAML file,
@@ -96,8 +95,7 @@ def load_config(config_path: str | None = None) -> TrainingConfig:
 
 
 class VariableTensorSliceData:
-    """
-    Represent a dataset of variable-length tensor slices.
+    """Represent a dataset of variable-length tensor slices.
 
     This class provides a way to create a dataset from a tensor, where each item
     is a slice of variable length. It supports random slice sizes and optional
@@ -109,8 +107,7 @@ class VariableTensorSliceData:
     """
 
     def __init__(self, tensor: torch.Tensor):
-        """
-        Initialize the VariableTensorSliceData with a tensor.
+        """Initialize the VariableTensorSliceData with a tensor.
 
         Args:
             tensor: Input tensor to slice from.
@@ -124,8 +121,7 @@ class VariableTensorSliceData:
         self.tensor = tensor
 
     def __len__(self) -> int:
-        """
-        Return the number of valid slices in the dataset.
+        """Return the number of valid slices in the dataset.
 
         Returns:
             The number of valid slices.
@@ -134,8 +130,7 @@ class VariableTensorSliceData:
         return self.tensor.shape[0] - 2 * MIN_SLICE_SIZE + 1
 
     def __getitem__(self, key: int) -> torch.Tensor:
-        """
-        Retrieve a tensor slice of random size for the given index.
+        """Retrieve a tensor slice of random size for the given index.
 
         Args:
             key: Index of the slice to retrieve.
@@ -161,8 +156,7 @@ class VariableTensorSliceData:
 
 @jit.script
 class VectorMLMCollator:
-    """
-    Collator for Vector Masked Language Modeling tasks.
+    """Collator for Vector Masked Language Modeling tasks.
 
     Handles data preparation for both Task I (standard MLM) and Task II.
     """
@@ -173,8 +167,7 @@ class VectorMLMCollator:
         select_prob: float = 0.15,
         mask_prob: float = 0.8,
     ):
-        """
-        Initialize the VectorMLMCollator with task probabilities.
+        """Initialize the VectorMLMCollator with task probabilities.
 
         Args:
             task_1_prob: Probability of performing Task I. Defaults to 0.9.
@@ -192,8 +185,7 @@ class VectorMLMCollator:
         self.mask_prob: float = mask_prob
 
     def __call__(self, examples: list[Tensor]) -> dict[str, Tensor]:
-        """
-        Prepare data for Vector Masked Language Modeling tasks.
+        """Prepare data for Vector Masked Language Modeling tasks.
 
         Args:
             examples: List of input tensors.
@@ -293,8 +285,7 @@ class VectorBert(torch.nn.Module):
         dropout_rate: float = 0.1,
         **kwargs: Any,
     ):
-        """
-        Initialize the VectorBert model.
+        """Initialize the VectorBert model.
 
         Args:
             config: BERT configuration.
@@ -322,8 +313,7 @@ class VectorBert(torch.nn.Module):
         torch.nn.init.zeros_(self.embed_out.bias)
 
     def forward(self, inputs: torch.Tensor, **kwargs: Any) -> torch.Tensor:
-        """
-        Perform forward pass through the VectorBert model.
+        """Perform forward pass through the VectorBert model.
 
         Args:
             inputs: Input tensor.
@@ -339,8 +329,7 @@ class VectorBert(torch.nn.Module):
 
 
 class TrainHarness(pl.LightningModule):
-    """
-    Lightning module for training the VectorBert model.
+    """Lightning module for training the VectorBert model.
 
     Handles optimization, data loading, and training/validation steps.
     """
@@ -352,8 +341,7 @@ class TrainHarness(pl.LightningModule):
         val_data: VariableTensorSliceData,
         train_config: TrainingConfig,
     ):
-        """
-        Initialize the TrainHarness.
+        """Initialize the TrainHarness.
 
         Args:
             model: VectorBert model to train.
@@ -371,8 +359,7 @@ class TrainHarness(pl.LightningModule):
         self.save_hyperparameters(asdict(train_config))
 
     def configure_optimizers(self) -> tuple[list[torch.optim.Optimizer], list[dict[str, Any]]]:
-        """
-        Configure optimizers and learning rate schedulers.
+        """Configure optimizers and learning rate schedulers.
 
         Returns:
             Dictionary containing optimizer and scheduler configurations.
@@ -409,8 +396,7 @@ class TrainHarness(pl.LightningModule):
         return [optimizer], [{"scheduler": scheduler, "interval": "step"}]
 
     def train_dataloader(self) -> torch.utils.data.DataLoader:
-        """
-        Create and return the training data loader.
+        """Create and return the training data loader.
 
         Returns:
             DataLoader for training data.
@@ -427,8 +413,7 @@ class TrainHarness(pl.LightningModule):
         )
 
     def val_dataloader(self) -> torch.utils.data.DataLoader:
-        """
-        Create and return the validation data loader.
+        """Create and return the validation data loader.
 
         Returns:
             DataLoader for validation data.
@@ -462,8 +447,7 @@ class TrainHarness(pl.LightningModule):
             logging.warning("Failed to add model summary to DVC.")
 
     def forward_loss(self, batch: dict[str, torch.Tensor]) -> torch.Tensor:
-        """
-        Compute forward pass and loss.
+        """Compute forward pass and loss.
 
         Args:
             batch: Dictionary containing input batch data.
@@ -479,8 +463,7 @@ class TrainHarness(pl.LightningModule):
         return torch.nn.functional.mse_loss(outputs[selected], targets[selected])
 
     def training_step(self, batch: dict[str, torch.Tensor], batch_idx: int) -> torch.Tensor:  # noqa: ARG002
-        """
-        Perform a single training step.
+        """Perform a single training step.
 
         Args:
             batch: Dictionary containing input batch data.
@@ -503,8 +486,7 @@ class TrainHarness(pl.LightningModule):
         return loss
 
     def validation_step(self, batch: dict[str, torch.Tensor], batch_idx: int):  # noqa: ARG002
-        """
-        Perform a single validation step.
+        """Perform a single validation step.
 
         Args:
             batch: Dictionary containing input batch data.
@@ -528,42 +510,57 @@ if __name__ == "__main__":
     pl.seed_everything(123)
     torch.set_float32_matmul_precision("high")
 
-    repo = dvc.repo.Repo(".")
+    repo: dvc.repo.Repo = dvc.repo.Repo(".")
 
-    train_data_path = sys.argv[1]
-    val_data_path = sys.argv[2]
-    trained_model_path = sys.argv[3]
-    config_path = sys.argv[4] if len(sys.argv) > 4 else None  # noqa: PLR2004
+    train_data_path: str = sys.argv[1]
+    val_data_path: str = sys.argv[2]
+    trained_model_path: str = sys.argv[3]
+    config_path: str | None = sys.argv[4] if len(sys.argv) > 4 else None  # noqa: PLR2004
 
-    train_config = load_config(config_path)
+    train_config: TrainingConfig = load_config(config_path)
 
-    model_config = transformers.BertConfig(
+    model_config: transformers.BertConfig = transformers.BertConfig(
         position_embedding_type="relative",
         attn_implementation="eager",
     )
 
-    train_tensors = torch.load(train_data_path, weights_only=True, map_location="cpu", mmap=True)
-    val_tensors = torch.load(val_data_path, weights_only=True, map_location="cpu", mmap=True)
+    train_tensors: torch.Tensor = torch.load(
+        train_data_path,
+        weights_only=True,
+        map_location="cpu",
+        mmap=True,
+    )
+    val_tensors: torch.Tensor = torch.load(
+        val_data_path,
+        weights_only=True,
+        map_location="cpu",
+        mmap=True,
+    )
 
-    train_data = VariableTensorSliceData(train_tensors)
-    val_data = VariableTensorSliceData(val_tensors)
+    train_data: VariableTensorSliceData = VariableTensorSliceData(train_tensors)
+    val_data: VariableTensorSliceData = VariableTensorSliceData(val_tensors)
 
-    model = VectorBert(config=model_config, input_dim=256)
-    harnessed_model = TrainHarness(model, train_data, val_data, train_config=train_config)
+    model: VectorBert = VectorBert(config=model_config, input_dim=256)
+    harnessed_model: TrainHarness = TrainHarness(
+        model,
+        train_data,
+        val_data,
+        train_config=train_config,
+    )
 
-    early_stop_callback = EarlyStopping(monitor="val_loss", patience=3, mode="min")
+    early_stop_callback: EarlyStopping = EarlyStopping(monitor="val_loss", patience=3, mode="min")
 
-    csv_logger = pl.loggers.CSVLogger(".")
-    csv_log_dir = csv_logger.log_dir
+    csv_logger: pl.loggers.CSVLogger = pl.loggers.CSVLogger(".")
+    csv_log_dir: str = csv_logger.log_dir
 
-    checkpoint_callback = ModelCheckpoint(
+    checkpoint_callback: ModelCheckpoint = ModelCheckpoint(
         dirpath=csv_log_dir,
         filename="model-{epoch:02d}-{val_loss:.2f}",
         save_top_k=-1,  # Save all checkpoints
         every_n_epochs=1,  # Save every epoch
     )
 
-    trainer = pl.Trainer(
+    trainer: pl.Trainer = pl.Trainer(
         default_root_dir=".",
         strategy="ddp_find_unused_parameters_true",
         precision="16-mixed",
@@ -580,10 +577,10 @@ if __name__ == "__main__":
     )
 
     # Auto-tune the learning rate
-    tuner = Tuner(trainer)
+    tuner: Tuner = Tuner(trainer)
     lr_finder = tuner.lr_find(harnessed_model)
     if lr_finder is not None:
-        new_lr = lr_finder.suggestion()
+        new_lr: float = lr_finder.suggestion()
         print(f"Suggested learning rate: {new_lr}")
         harnessed_model.hparams.lr = new_lr
         harnessed_model.save_hyperparameters()

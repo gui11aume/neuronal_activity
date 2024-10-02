@@ -12,24 +12,24 @@ packages = [{include = "neuronal_activity", from = "src"}]
 
 [tool.poetry.dependencies]
 python = "^3.10"  # Requires Python 3.10 or higher
-lightning = "^2.0.9"  # PyTorch Lightning for easier deep learning
-torch = "^2.0.1"  # PyTorch for deep learning
-transformers = "^4.31.0"  # Hugging Face Transformers for NLP models
-tqdm = "^4.65.0"  # Progress bar library
-dvc = "^3.0.0"  # Data Version Control for managing data and ML pipelines
-safetensors = "^0.3.1"  # Efficient and safe tensor serialization
+lightning = "^2.1.3"  # PyTorch Lightning for easier deep learning
+torch = "^2.1.2"  # PyTorch for deep learning
+transformers = "^4.36.2"  # Hugging Face Transformers for NLP models
+tqdm = "^4.66.1"  # Progress bar library
+dvc = "^3.38.1"  # Data Version Control for managing data and ML pipelines
+safetensors = "^0.4.1"  # Efficient and safe tensor serialization
 
 [tool.poetry.group.dev.dependencies]
-ruff = "^0.1.0"  # Fast Python linter and formatter
+ruff = "^0.6.8"  # Fast Python linter and formatter
 pytest = "^7.4.0"  # Testing framework
-pre-commit = "^2.20.0"  # Pre-commit hooks for code discipline
-virtualenv = "^20.0.0"  # Virtual environment creation for pre-commit hooks
-pydocstyle = "^6.1.1"  # Pydocstyle for docstring checks
+pre-commit = "^3.6.0"  # Pre-commit hooks for code discipline
+virtualenv = "^20.25.0"  # Virtual environment creation for pre-commit hooks
+pydocstyle = "^6.3.0"  # Pydocstyle for docstring checks
+mypy = "^1.8.0"  # Optional: Static type checker for Python
 
 [build-system]
 requires = ["poetry-core"]
 build-backend = "poetry.core.masonry.api"
-
 
 [tool.ruff]
 target-version = "py310"  # Target Python version for linting
@@ -64,24 +64,28 @@ exclude = [
 select = [
     # Code style and formatting
     "E",  # pycodestyle errors
-    "I",  # isort
-    "Q",  # flake8-quotes
-    "S",  # pycodestyle style
     "W",  # pycodestyle warnings
-    "W292",  # Missing newline at end of file
+    "F",  # pyflakes
 
-
-    # Code quality and best practices
+    # Quality and best practices
     "A",  # flake8-builtins
     "B",  # flake8-bugbear
     "C",  # flake8-comprehensions
-    "F",  # pyflakes
     "N",  # pep8-naming
     "SIM",  # flake8-simplify
     "UP",  # pyupgrade
 
-    # Documentation
-    "D",  # pycodestyle docstring
+    # Imports
+    "I",  # isort
+
+    # Docstrings
+    "D",  # pydocstyle
+
+    # Complexity
+    "C90",  # mccabe
+
+    # Quotes
+    "Q",  # flake8-quotes
 
     # Type checking
     "TCH",  # flake8-type-checking
@@ -98,28 +102,50 @@ select = [
     "ERA",  # eradicate
     "PL",  # pylint
 ]
-ignore = ["D100", "D104", "D203", "D212", "E203", "E266", "E501", "F403", "F401", "COM812", "D406", "D407"]  # Ignore specific error codes
+ignore = []  # Ignore specific error codes
+
 # Allow autofix for all enabled rules (when `--fix`) is provided.
-fixable = ["A", "B", "C", "D", "E", "F", "I", "TCH", "COM", "PT", "SIM", "UP", "W291", "W292", "W293"]
+fixable = ["A", "B", "C", "D", "E", "F", "I", "W", "Q", "COM"]
 unfixable = []
 
 # Allow unused variables when underscore-prefixed.
 dummy-variable-rgx = "^(_+|(_+[a-zA-Z0-9_]*[a-zA-Z0-9]+?))$"
 
+[tool.ruff.lint.per-file-ignores]
+"__init__.py" = ["F401"]  # Ignore unused imports in __init__.py files
+
+[tool.ruff.lint.flake8-quotes]
+inline-quotes = "double"
+multiline-quotes = "double"
+docstring-quotes = "double"
+
 [tool.ruff.lint.mccabe]
-# Unlike Flake8, default to a complexity level of 10.
 max-complexity = 10
 
-[tool.ruff.lint.per-file-ignores]
-"__init__.py" = ["F401"]   # ignore unused imports in __init__.py files
-"tests/*" = ["S101"]  # ignore S101 (use of assert) in test files
+[tool.ruff.lint.pydocstyle]
+convention = "google"
 
-
-[tool.ruff.lint.flake8-annotations]
-allow-star-arg-any = true  # Allow using '*args: Any' in type annotations
-suppress-none-returning = true  # Don't require explicit 'None' return type annotations
+[tool.ruff.format]
+quote-style = "double"
+indent-style = "space"
+skip-magic-trailing-comma = false
+line-ending = "auto"
+docstring-code-format = true
+docstring-code-line-length = "dynamic"
 
 [tool.pytest.ini_options]
 pythonpath = [
   "src"
 ]
+
+[tool.ruff.lint.isort]
+case-sensitive = false
+combine-as-imports = true
+force-single-line = false
+force-sort-within-sections = false
+forced-separate = []
+from-first = false
+lines-after-imports = 2
+lines-between-types = 0
+section-order = ["future", "standard-library", "third-party", "first-party", "local-folder"]
+split-on-trailing-comma = true

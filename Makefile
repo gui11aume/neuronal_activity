@@ -26,6 +26,7 @@ setup-pre-commit:
 
 clean:
 	rm -rf $(VENV)
+	rm -f .python-version
 	find . -type f -name '*.pyc' -delete
 	find . -type d -name '__pycache__' -delete
 

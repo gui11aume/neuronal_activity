@@ -1,3 +1,5 @@
+"""Test cases for the VectorBert model and its components."""
+
 from pathlib import Path
 from unittest.mock import patch
 
@@ -19,8 +21,7 @@ from neuronal_activity.pretrain_vector_bert import (
 
 @pytest.fixture
 def harnessed_model() -> TrainHarness:
-    """
-    Create and return a TrainHarness instance for testing.
+    """Create and return a TrainHarness instance for testing.
 
     This fixture creates a TrainHarness instance with a VectorBert model,
     random train and validation data, and default training configuration.
@@ -42,8 +43,7 @@ def harnessed_model() -> TrainHarness:
 
 @pytest.fixture
 def examples() -> list[torch.Tensor]:
-    """
-    Generate a list of random tensor examples for testing.
+    """Generate a list of random tensor examples for testing.
 
     Creates a list of 16 random tensors with varying lengths between
     MIN_SLICE_SIZE and MAX_SLICE_SIZE, and dimension 256.
@@ -78,8 +78,7 @@ def test_variable_tensor_slice_data_out_of_bounds():
 
 
 def test_vector_mlm_collator():
-    """
-    Verify the VectorMLMCollator functionality.
+    """Verify the VectorMLMCollator functionality.
 
     Checks if the collator correctly processes a batch of examples,
     including proper shaping, padding, masking, and key presence in the output.
@@ -93,34 +92,26 @@ def test_vector_mlm_collator():
 
     batch = collator(examples)
 
-    assert set(batch.keys()) == {
-        "inputs",
-        "attention_mask",
-        "targets",
-        "selected",
-    }, f"Expected keys {'inputs', 'attention_mask', 'targets', 'selected'}, got {batch.keys()}"
+    assert set(batch.keys()) == {"inputs", "attention_mask", "targets", "selected"}, (
+        f"Expected keys {{'inputs', 'attention_mask', 'targets', 'selected'}}, "
+        f"got {batch.keys()}"
+    )
 
-    assert batch["inputs"].shape == (
-        3,
-        15,
-        256,
-    ), f"Expected inputs shape (3, 15, 256), got {batch['inputs'].shape}"
+    assert batch["inputs"].shape == (3, 15, 256), (
+        f"Expected inputs shape (3, 15, 256), " f"got {batch['inputs'].shape}"
+    )
 
-    assert batch["attention_mask"].shape == (
-        3,
-        15,
-    ), f"Expected attention_mask shape (3, 15), got {batch['attention_mask'].shape}"
+    assert batch["attention_mask"].shape == (3, 15), (
+        f"Expected attention_mask shape (3, 15), " f"got {batch['attention_mask'].shape}"
+    )
 
-    assert batch["targets"].shape == (
-        3,
-        15,
-        256,
-    ), f"Expected targets shape (3, 15, 256), got {batch['targets'].shape}"
+    assert batch["targets"].shape == (3, 15, 256), (
+        f"Expected targets shape (3, 15, 256), " f"got {batch['targets'].shape}"
+    )
 
-    assert batch["selected"].shape == (
-        3,
-        15,
-    ), f"Expected selected shape (3, 15), got {batch['selected'].shape}"
+    assert batch["selected"].shape == (3, 15), (
+        f"Expected selected shape (3, 15), " f"got {batch['selected'].shape}"
+    )
 
     assert torch.all(
         batch["attention_mask"][0, :10],
@@ -153,8 +144,7 @@ def test_vector_mlm_collator():
 
 
 def test_vector_mlm_collator_task_probabilities(examples: list[torch.Tensor]) -> None:
-    """
-    Verify the task probabilities of VectorMLMCollator.
+    """Verify the task probabilities of VectorMLMCollator.
 
     Checks if Task I (standard MLM) occurs with the expected frequency by running
     the collator multiple times and counting the occurrences of Task I.
@@ -184,8 +174,7 @@ def test_vector_mlm_collator_task_probabilities(examples: list[torch.Tensor]) ->
 
 
 def test_vector_mlm_collator_masking_rate(examples: list[torch.Tensor]) -> None:
-    """
-    Verify the masking rate of VectorMLMCollator.
+    """Verify the masking rate of VectorMLMCollator.
 
     Checks if the selection and masking rates are within expected ranges.
 
@@ -216,8 +205,7 @@ def test_vector_mlm_collator_masking_rate(examples: list[torch.Tensor]) -> None:
 
 
 def test_dimensions_forward_pass(harnessed_model: TrainHarness) -> None:
-    """
-    Verify the dimensions of tensors in a forward pass of the model.
+    """Verify the dimensions of tensors in a forward pass of the model.
 
     Ensures that the output dimensions match the input dimensions
     and that all tensor shapes are as expected.
@@ -236,8 +224,7 @@ def test_dimensions_forward_pass(harnessed_model: TrainHarness) -> None:
 
 
 def test_train_logging(harnessed_model: TrainHarness, tmp_path: Path) -> None:
-    """
-    Verify the logging functionality during model training.
+    """Verify the logging functionality during model training.
 
     Checks if the trainer correctly logs metrics, creates checkpoints,
     and handles DVC tracking messages.
