@@ -80,6 +80,28 @@ Install developer dependencies (including pre-commit hooks):
    make install-dev
    ```
 
+## Editing with VS Code or Cursor
+
+This project uses [VS Code](https://code.visualstudio.com/) or [Cursor](https://cursor.sh/) for development. The `.vscode/settings.json` file is set up with recommended settings for Python development, including Ruff integration. To set up Ruff in VS Code or Cursor:
+
+1. Install the Ruff extension:
+   Search for `Ruff` in the Extensions marketplace and install it.
+
+2. The `.vscode/settings.json` file already includes Ruff configuration. It should contain:
+   ```json
+   {
+     "python.linting.enabled": true,
+     "python.linting.ruffEnabled": true,
+     "editor.formatOnSave": true,
+     "editor.codeActionsOnSave": {
+       "source.fixAll.ruff": true
+     }
+   }
+   ```
+
+3. Restart VS Code or Cursor to apply the changes.
+
+Now, Ruff will automatically lint and format your Python code on save, ensuring consistent code style and catching potential issues early in development.
 
 ## Testing and Debugging
 
