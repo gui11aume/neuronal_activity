@@ -15,7 +15,7 @@
             "type": "python",
             "request": "launch",
             "module": "pytest",
-            "args": ["tests/test_pretrain_VectorBert.py"],
+            "args": ["tests/test_pretrain_vector_bert.py"],
             "cwd": "${workspaceFolder}",
             "console": "integratedTerminal"
         },
@@ -24,7 +24,7 @@
             "type": "python",
             "request": "launch",
             "module": "pytest",
-            "args": ["tests/test_pretrain_VectorBert.py::test_dimensions_forward_pass"],
+            "args": ["tests/test_pretrain_vector_bert.py::test_dimensions_forward_pass"],
             "cwd": "${workspaceFolder}",
             "console": "integratedTerminal"
         }

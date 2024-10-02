@@ -263,9 +263,8 @@ class VectorMLMCollator:
             # 3. Preserve padding and update selection mask
 
             # 1. Select entire rows (channels) for masking
-            row_selection_prob = torch.full((inputs.shape[0], 1, inputs.shape[2]), 1.0)
-            selected_rows = torch.bernoulli(row_selection_prob).to(torch.bool)
-            selected_rows = selected_rows.expand_as(inputs)
+            row_selection_prob = torch.full((inputs.shape[0], 1, inputs.shape[2]), 0.5)
+            selected_rows = torch.bernoulli(row_selection_prob).to(torch.bool).expand_as(inputs)
 
             # 2. Mask a portion of the selected rows
             mask_prob = torch.full(inputs.shape, 0.5)

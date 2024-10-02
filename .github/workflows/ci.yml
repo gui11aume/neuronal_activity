@@ -59,7 +59,7 @@ jobs:
     - name: Run make install-dev
       run: make install-dev
 
-    - name: Run make test
+    - name: Run make test-ci
       run: make test-ci
       continue-on-error: true
 

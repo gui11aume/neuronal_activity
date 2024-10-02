@@ -1,4 +1,3 @@
-# ruff: noqa: S101
 import pytest
 
 from src.neuronal_activity.utils import generate_codename

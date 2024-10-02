@@ -43,8 +43,8 @@ test-ci: install-dev
 
 # Run a single file (example)
 test-one-file: install-dev
-	$(POETRY) run pytest tests/test_pretrain_VectorBert.py
+	$(POETRY) run pytest tests/test_pretrain_vector_bert.py
 
 # Run a single case (example)
 test-one-case: install-dev
-	$(POETRY) run pytest tests/test_pretrain_VectorBert.py::test_dimensions_forward_pass
+	$(POETRY) run pytest tests/test_pretrain_vector_bert.py::test_dimensions_forward_pass

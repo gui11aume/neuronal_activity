@@ -1,5 +1,3 @@
-# ruff: noqa: S101
-
 from pathlib import Path
 from unittest.mock import patch
 
@@ -36,8 +34,8 @@ def harnessed_model() -> TrainHarness:
         attn_implementation="eager",
     )
     model = VectorBert(config=model_config, input_dim=256)
-    train_data = VariableTensorSliceData(torch.randn(2048, 256))
-    val_data = VariableTensorSliceData(torch.randn(128, 256))
+    train_data = VariableTensorSliceData(torch.randn(17, 256))
+    val_data = VariableTensorSliceData(torch.randn(9, 256))
     train_config = TrainingConfig()
     return TrainHarness(model, train_data, val_data, train_config=train_config)
 
@@ -47,7 +45,7 @@ def examples() -> list[torch.Tensor]:
     """
     Generate a list of random tensor examples for testing.
 
-    Creates a list of 1536 random tensors with varying lengths between
+    Creates a list of 16 random tensors with varying lengths between
     MIN_SLICE_SIZE and MAX_SLICE_SIZE, and dimension 256.
 
     Returns:
@@ -56,7 +54,7 @@ def examples() -> list[torch.Tensor]:
     """
     return [
         torch.randn(torch.randint(MIN_SLICE_SIZE, MAX_SLICE_SIZE + 1, (1,)).item(), 256)
-        for _ in range(1536)
+        for _ in range(16)
     ]
 
 

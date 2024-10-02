@@ -288,8 +288,8 @@ Summary of changes (50 chars or fewer)
 More detailed explanation of the changes, wrapped at
 72 characters. Include the motivation for the change
 and contrast it with previous behavior.
-Bullet point for distinct change 1
-Bullet point for distinct change 2
+ - Bullet point for distinct change 1
+ - Bullet point for distinct change 2
 ```
 
 

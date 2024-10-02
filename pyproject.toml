@@ -1,5 +1,7 @@
 [settings]
 convention = "google"
+
+
 [tool.poetry]
 name = "neuronal-activity-project"
 version = "0.1.0"
@@ -17,7 +19,6 @@ tqdm = "^4.65.0"  # Progress bar library
 dvc = "^3.0.0"  # Data Version Control for managing data and ML pipelines
 safetensors = "^0.3.1"  # Efficient and safe tensor serialization
 
-
 [tool.poetry.group.dev.dependencies]
 ruff = "^0.1.0"  # Fast Python linter and formatter
 pytest = "^7.4.0"  # Testing framework
@@ -29,9 +30,10 @@ pydocstyle = "^6.1.1"  # Pydocstyle for docstring checks
 requires = ["poetry-core"]
 build-backend = "poetry.core.masonry.api"
 
+
 [tool.ruff]
-line-length = 100  # Maximum line length
 target-version = "py310"  # Target Python version for linting
+line-length = 100  # Maximum line length
 
 # Exclude a variety of commonly ignored directories.
 exclude = [
@@ -66,6 +68,8 @@ select = [
     "Q",  # flake8-quotes
     "S",  # pycodestyle style
     "W",  # pycodestyle warnings
+    "W292",  # Missing newline at end of file
+
 
     # Code quality and best practices
     "A",  # flake8-builtins
@@ -94,8 +98,7 @@ select = [
     "ERA",  # eradicate
     "PL",  # pylint
 ]
-ignore = ["D100", "D104", "D203", "D212", "E203", "E266", "E501", "F403", "F401", "COM812"]  # Ignore specific error codes
-
+ignore = ["D100", "D104", "D203", "D212", "E203", "E266", "E501", "F403", "F401", "COM812", "D406", "D407"]  # Ignore specific error codes
 # Allow autofix for all enabled rules (when `--fix`) is provided.
 fixable = ["A", "B", "C", "D", "E", "F", "I", "TCH", "COM", "PT", "SIM", "UP", "W291", "W292", "W293"]
 unfixable = []
@@ -109,6 +112,8 @@ max-complexity = 10
 
 [tool.ruff.lint.per-file-ignores]
 "__init__.py" = ["F401"]   # ignore unused imports in __init__.py files
+"tests/*" = ["S101"]  # ignore S101 (use of assert) in test files
+
 
 [tool.ruff.lint.flake8-annotations]
 allow-star-arg-any = true  # Allow using '*args: Any' in type annotations
