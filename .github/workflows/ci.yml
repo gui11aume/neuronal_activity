@@ -6,65 +6,25 @@ on:
   pull_request:
     branches: [ main ]
 
-jobs:
-  test-make-install:
-    runs-on: ubuntu-latest
+permissions:
+  checks: write
+  contents: read
 
+jobs:
+  test:
+    runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v4
 
-    - name: Install pyenv
-      run: |
-        git clone https://github.com/pyenv/pyenv.git $HOME/.pyenv
-        echo "$HOME/.pyenv/bin" >> $GITHUB_PATH
-        echo "PYENV_ROOT=$HOME/.pyenv" >> $GITHUB_ENV
+    - name: Setup Environment
+      uses: ./.github/actions/setup-env
 
-    - name: Set up pyenv
-      run: |
-        echo "$HOME/.pyenv/shims" >> $GITHUB_PATH
-        echo "$HOME/.pyenv/bin" >> $GITHUB_PATH
-
-    - name: Verify pyenv installation
-      run: |
-        pyenv --version
-
-    - name: Install Python with pyenv
-      run: |
-        PYTHON_VERSION=$(cat .python-version)
-        pyenv install $PYTHON_VERSION
-        pyenv local $PYTHON_VERSION
-        python --version
-
-    - name: Get full Python version
-      id: full-python-version
-      run: |
-        echo "version=$(python -c "import sys; print('-'.join(str(v) for v in sys.version_info))")" >> $GITHUB_OUTPUT
-
-    - name: Cache poetry dependencies
-      uses: actions/cache@v3
-      with:
-        path: ~/.cache/pypoetry
-        key: ${{ runner.os }}-poetry-${{ hashFiles('**/poetry.lock') }}-${{ steps.full-python-version.outputs.version }}
-        restore-keys: |
-          ${{ runner.os }}-poetry-
-
-    - name: Install dependencies
-      run: |
-        python -m pip install --upgrade pip
-        pip install poetry
-
-    - name: Run make install
-      run: make install
-
-    - name: Run make install-dev
-      run: make install-dev
-
-    - name: Run make test-ci
+    - name: Run tests
       run: make test-ci
       continue-on-error: true
 
     - name: Upload pytest results
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       with:
         name: pytest-results
         path: pytest.xml
@@ -75,3 +35,5 @@ jobs:
       if: always()
       with:
         files: pytest.xml
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

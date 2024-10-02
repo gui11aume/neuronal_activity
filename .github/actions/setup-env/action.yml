@@ -1,0 +1,52 @@
+name: 'Setup Environment'
+description: 'Sets up Python, pyenv, and installs dependencies'
+
+runs:
+  using: "composite"
+  steps:
+    - name: Install pyenv
+      run: |
+        git clone https://github.com/pyenv/pyenv.git $HOME/.pyenv
+        echo "$HOME/.pyenv/bin" >> $GITHUB_PATH
+        echo "PYENV_ROOT=$HOME/.pyenv" >> $GITHUB_ENV
+      shell: bash
+
+    - name: Set up pyenv
+      run: |
+        echo "$HOME/.pyenv/shims" >> $GITHUB_PATH
+        echo "$HOME/.pyenv/bin" >> $GITHUB_PATH
+      shell: bash
+
+    - name: Verify pyenv installation
+      run: pyenv --version
+      shell: bash
+
+    - name: Install Python with pyenv
+      run: |
+        PYTHON_VERSION=$(cat .python-version)
+        pyenv install $PYTHON_VERSION
+        pyenv local $PYTHON_VERSION
+        python --version
+      shell: bash
+
+    - name: Get full Python version
+      id: full-python-version
+      run: |
+        echo "version=$(python -c "import sys; print('-'.join(str(v) for v in sys.version_info))")" >> $GITHUB_OUTPUT
+      shell: bash
+
+    - name: Cache poetry dependencies
+      uses: actions/cache@v4
+      with:
+        path: ~/.cache/pypoetry
+        key: ${{ runner.os }}-poetry-${{ hashFiles('**/poetry.lock') }}-${{ steps.full-python-version.outputs.version }}
+        restore-keys: |
+          ${{ runner.os }}-poetry-
+
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install poetry
+        make install
+        make install-dev
+      shell: bash
