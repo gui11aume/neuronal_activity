@@ -23,13 +23,13 @@ runs:
 
     - name: Install Python with pyenv
       run: |
-        PYTHON_VERSION=$(cat .python-version)
+        PYTHON_VERSION=$(awk -F'"' '/^python = / {print substr($2, 2)}' pyproject.toml)
         pyenv install $PYTHON_VERSION
         pyenv local $PYTHON_VERSION
         python --version
       shell: bash
 
-    - name: Get full Python version
+    - name: Check full Python version
       id: full-python-version
       run: |
         echo "version=$(python -c "import sys; print('-'.join(str(v) for v in sys.version_info))")" >> $GITHUB_OUTPUT
@@ -43,10 +43,9 @@ runs:
         restore-keys: |
           ${{ runner.os }}-poetry-
 
-    - name: Install dependencies
+    - name: Install poetry and dependencies
       run: |
         python -m pip install --upgrade pip
         pip install poetry
-        make install
         make install-dev
       shell: bash

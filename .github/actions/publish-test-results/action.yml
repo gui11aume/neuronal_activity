@@ -1,0 +1,59 @@
+name: 'Upload Test Results'
+description: 'Uploads test results as a check run'
+inputs:
+  test-results-file:
+    description: 'Path to the test results file'
+    required: true
+    default: 'pytest.xml'
+runs:
+  using: "composite"
+  steps:
+    - name: Parse test results
+      id: parse_test_results
+      shell: python
+      run: |
+        import xml.etree.ElementTree as ET
+        import os
+
+        results_file = '${{ inputs.test-results-file }}'
+        tree = ET.parse(results_file)
+        root = tree.getroot()
+
+        # Find the testsuite element
+        testsuite = root.find('.//testsuite')
+        if testsuite is None:
+            raise ValueError("No testsuite element found in the XML file")
+
+        # Extract attributes from testsuite element
+        total_tests = int(testsuite.attrib.get('tests', 0))
+        failures = int(testsuite.attrib.get('failures', 0))
+        errors = int(testsuite.attrib.get('errors', 0))
+        skipped = int(testsuite.attrib.get('skipped', 0))
+        time = float(testsuite.attrib.get('time', 0))
+
+        passed = total_tests - failures - errors - skipped
+
+        with open(os.environ['GITHUB_STEP_SUMMARY'], 'w') as f:
+            f.write(f"# Test Results\n\n")
+            f.write(f"- Total tests: {total_tests}\n")
+            f.write(f"- Passed: {passed}\n")
+            f.write(f"- Failed: {failures}\n")
+            f.write(f"- Errors: {errors}\n")
+            f.write(f"- Skipped: {skipped}\n")
+            f.write(f"- Total time: {time:.2f} seconds\n")
+
+        # Set output variables for the next step
+        print(f"failures={failures}", file=open(os.environ["GITHUB_OUTPUT"], "a"))
+        print(f"errors={errors}", file=open(os.environ["GITHUB_OUTPUT"], "a"))
+
+    - name: Check for test failures
+      shell: bash
+      run: |
+        failures=${{ steps.parse_test_results.outputs.failures }}
+        errors=${{ steps.parse_test_results.outputs.errors }}
+        if [[ $failures -gt 0 || $errors -gt 0 ]]; then
+          echo "Tests failed"
+          exit 1
+        else
+          echo "All tests passed"
+        fi

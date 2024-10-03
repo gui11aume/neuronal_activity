@@ -14,4 +14,12 @@ jobs:
     - name: Setup Environment
       uses: ./.github/actions/setup-env
 
+    - name: Check Ruff installation and version
+      run: |
+        RUFF_PATH=$(poetry run which ruff)
+        echo "Ruff path: $RUFF_PATH"
+        RUFF_VERSION=$(poetry run ruff --version)
+        echo "Ruff version: $RUFF_VERSION"
+      shell: bash
+
     - uses: pre-commit/action@v3.0.1

@@ -1,6 +1,6 @@
 stages:
   train:
-    cmd: > 
+    cmd: >
       python pretrain_VectorBert.py
       data/train_tensors.pt
       data/validation_tensors.pt

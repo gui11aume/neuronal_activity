@@ -31,9 +31,7 @@ jobs:
       if: always()
 
     - name: Publish Test Results
-      uses: EnricoMi/publish-unit-test-result-action@v2
+      uses: ./.github/actions/publish-test-results
       if: always()
       with:
-        files: pytest.xml
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        test-results-file: pytest.xml

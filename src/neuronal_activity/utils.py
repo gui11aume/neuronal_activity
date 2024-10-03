@@ -1,15 +1,15 @@
+"""Utility functions for the neuronal activity project."""
+
 import random
 
 
 def generate_codename() -> str:
-    """
-    Generate a random codename.
+    """Generate a random codename.
 
     Creates a codename by combining a random adjective and a random noun
     from predefined lists, separated by a hyphen.
 
-    Returns
-    -------
+    Returns:
         A string representing the generated codename.
 
     """

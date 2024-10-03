@@ -116,9 +116,6 @@ This project uses [VS Code](https://code.visualstudio.com/) or [Cursor](https://
 
 3. Restart VS Code or Cursor to apply the changes.
 
-**Important Note:**
-*It is critical to check that the Ruff version installed in the repository is the same as the one in the pre-commit hook. This is done by the commit hook `check-ruff-version`.*
-
 Now, Ruff will automatically lint and format your Python code on save, ensuring consistent code style and catching potential issues early in development.
 
 ## Testing and Debugging
@@ -199,7 +196,7 @@ git commit -m "Your commit message with justification" --no-verify
 If you want to run the pre-commit hooks manually before committing, you can use the following command:
 
 ```bash
-pre-commit run --all-files
+pre-commit run --show-diff-on-failure --color=always --all-files
 ```
 
 To run a specific hook, you can use the following command:
@@ -221,7 +218,6 @@ The hooks include the following:
 
 ### General Hooks
 
-- **check-ruff-version**: Checks pre-commit hook and repository use the same Ruff version.
 - **check-toml**: Validates the syntax of TOML files to ensure they are parseable.
 - **check-json**: Validates the syntax of JSON files to ensure they are parseable.
 - **check-added-large-files**: Prevents the addition of large files to the repository.
@@ -300,7 +296,7 @@ git diff HEAD > patch.patch
 Then reference the patch file with @patch.patch in the prompt to write a good commit message:
 
 ```
-Analyze the output of git diff HEAD in @patch.patch and craft a concise, informative commit message for the changes. Ensure the message is clear and informative for future readers who may not be familiar with the current context. Follow these guidelines: 1. Start with a summary line of at most 50 characters, written in the present tense. 2. Do not begin the summary with 'feat:', 'fix:', or any other prefixes. 3. Capitalize the first word of the summary. 4. Do not end the summary line with a period. 5. After the summary, add a blank line followed by a more detailed description if necessary. 6. In the detailed description, explain the 'what' and 'why' of the changes, not the 'how'. 7. Wrap the detailed description at 72 characters. 8. Use bullet points for multiple distinct changes.
+Analyze the output of `git diff HEAD` in @patch.patch and craft a concise, informative commit message for the changes. Ensure the message is clear and informative for future readers who may not be familiar with the current context. Follow these guidelines: 1. Start with a summary line of at most 50 characters, written in the present tense. 2. Do not begin the summary with 'feat:', 'fix:', or any other prefixes. 3. Capitalize the first word of the summary. 4. Do not end the summary line with a period. 5. After the summary, add a blank line followed by a more detailed description if necessary. 6. In the detailed description, explain the 'what' and 'why' of the changes, not the 'how'. 7. Wrap the detailed description at 72 characters. 8. Use bullet points for multiple distinct changes.
 Example format:
 Summary of changes (50 chars or fewer)
 

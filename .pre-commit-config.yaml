@@ -7,15 +7,6 @@ exclude: "^\
   "
 
 repos:
-  - repo: local
-    hooks:
-      - id: check-ruff-version
-        name: Check Ruff Version
-        entry: python .hooks/check_ruff_version.py
-        language: system
-        pass_filenames: false
-        always_run: true
-
   - repo: https://github.com/pre-commit/pre-commit-hooks
     rev: v4.6.0
     hooks:
