@@ -22,10 +22,11 @@ safetensors = "^0.4.1"  # Efficient and safe tensor serialization
 [tool.poetry.group.dev.dependencies]
 ruff = "^0.6.8"  # Fast Python linter and formatter
 pytest = "^7.4.0"  # Testing framework
+pytest-cov = "^4.1.0"  # Coverage plugin for pytest
 pre-commit = "^3.6.0"  # Pre-commit hooks for code discipline
 virtualenv = "^20.25.0"  # Virtual environment creation for pre-commit hooks
 pydocstyle = "^6.3.0"  # Pydocstyle for docstring checks
-mypy = "^1.8.0"  # Optional: Static type checker for Python
+mypy = "^1.9.0"  # Static type checker for Python
 
 [build-system]
 requires = ["poetry-core"]

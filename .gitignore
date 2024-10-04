@@ -169,3 +169,4 @@ bandit-report.txt
 .python-version
 .python-*-installed
 pytest.xml
+coverage.lcov

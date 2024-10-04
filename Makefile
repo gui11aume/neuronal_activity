@@ -41,7 +41,7 @@ clean:
 
 # Run the training process using DVC, ensuring the setup is completed first
 train: install
-	$(POETRY) run CUDA_VISIBLE_DEVICES=0 dvc repro
+	$(POETRY) run dvc repro
 
 # Run tests using pytest
 test: $(DEV_MARKER)
@@ -49,7 +49,7 @@ test: $(DEV_MARKER)
 
 # Run tests using pytest and generate XML report
 test-ci: $(DEV_MARKER)
-	$(POETRY) run pytest tests/ --junitxml=pytest.xml
+	$(POETRY) run pytest tests/ --cov=./ --cov-report=lcov --cov-report=term --junitxml=pytest.xml
 
 # Run a single file (example)
 test-one-file: $(DEV_MARKER)
