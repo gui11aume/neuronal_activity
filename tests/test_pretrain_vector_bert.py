@@ -58,6 +58,7 @@ def examples() -> list[torch.Tensor]:
     ]
 
 
+@pytest.mark.dpp
 def test_variable_tensor_slice_data_slice_sizes():
     """Verify that VariableTensorSliceData produces slices of expected sizes."""
     tensor = VariableTensorSliceData(torch.randn(2048, 256))
@@ -70,6 +71,7 @@ def test_variable_tensor_slice_data_slice_sizes():
         ), f"Slice {i} has size {tensor[i].shape[0]}, expected at most {MAX_SLICE_SIZE}"
 
 
+@pytest.mark.dpp
 def test_variable_tensor_slice_data_out_of_bounds():
     """Verify that VariableTensorSliceData raises IndexError for out-of-bounds access."""
     tensor = VariableTensorSliceData(torch.randn(2048, 256))
@@ -77,6 +79,7 @@ def test_variable_tensor_slice_data_out_of_bounds():
         tensor[len(tensor)]
 
 
+@pytest.mark.dpp
 def test_vector_mlm_collator():
     """Verify the VectorMLMCollator functionality.
 
@@ -143,6 +146,7 @@ def test_vector_mlm_collator():
     ), "Expected padded elements to be -666.0"
 
 
+@pytest.mark.dpp
 def test_vector_mlm_collator_task_probabilities(examples: list[torch.Tensor]) -> None:
     """Verify the task probabilities of VectorMLMCollator.
 
@@ -173,6 +177,7 @@ def test_vector_mlm_collator_task_probabilities(examples: list[torch.Tensor]) ->
     assert 865 <= task_1_count <= 935, f"Task I occurred {task_1_count} times, expected around 900"  # noqa: PLR2004
 
 
+@pytest.mark.dpp
 def test_vector_mlm_collator_masking_rate(examples: list[torch.Tensor]) -> None:
     """Verify the masking rate of VectorMLMCollator.
 

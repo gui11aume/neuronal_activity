@@ -178,9 +178,9 @@ The lesson to learn from the XY problem is not to focus on Y because you think t
 
 Code discipline is about addressing the XYZ problem: nobody really knows what the real problems are.
 
-### No Exceptions
+### Unexpected Behaviors are Issues
 
-Fixing all the issues in a codebase is unrealistic, but the code should behave as expected all the time. The only principle of code discipline is that there should be no exceptions. Any unexpected behavior should be treated as a bug and fixed.
+To mitigate the XYZ problem, all unexpected behaviors must be treated as issues. Every exception, odd behavior, unexpected result or running time, edge case, etc. must be documented in a Github issue.
 
 ## Pre-commit Hooks
 

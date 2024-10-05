@@ -514,7 +514,7 @@ if __name__ == "__main__":
 
     train_data_path: str = sys.argv[1]
     val_data_path: str = sys.argv[2]
-    trained_model_path: str = sys.argv[3]
+    trained_weights_path: str = sys.argv[3]
     config_path: str | None = sys.argv[4] if len(sys.argv) > 4 else None  # noqa: PLR2004
 
     train_config: TrainingConfig = load_config(config_path)
@@ -589,15 +589,9 @@ if __name__ == "__main__":
 
     trainer.fit(harnessed_model)
 
-    trainer.save_checkpoint(f"{trained_model_path}.ckpt")
-    save_file(
-        {"model_state_dict": model.state_dict(), "config": asdict(model.config)},
-        trained_model_path,
-    )
+    trainer.save_checkpoint(f"{trained_weights_path}.ckpt")
+    save_file(model.state_dict(), trained_weights_path)
 
     # Commit artifacts
-    repo.scm.add([trained_model_path, csv_log_dir])
+    repo.scm.add([trained_weights_path, csv_log_dir])
     repo.scm.commit(f"Train VectorBert model -- {generate_codename()}")
-
-    # Push to remote storage (if configured)
-    repo.push()

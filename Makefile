@@ -49,7 +49,7 @@ test: $(DEV_MARKER)
 
 # Run tests using pytest and generate XML report
 test-ci: $(DEV_MARKER)
-	$(POETRY) run pytest tests/ --cov=./ --cov-report=lcov --cov-report=term --junitxml=pytest.xml
+	$(POETRY) run pytest tests/ --cov=./ --cov-branch --cov-report=lcov --cov-report=term --junitxml=pytest.xml
 
 # Run a single file (example)
 test-one-file: $(DEV_MARKER)

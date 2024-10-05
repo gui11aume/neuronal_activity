@@ -22,7 +22,7 @@ safetensors = "^0.4.1"  # Efficient and safe tensor serialization
 [tool.poetry.group.dev.dependencies]
 ruff = "^0.6.8"  # Fast Python linter and formatter
 pytest = "^7.4.0"  # Testing framework
-pytest-cov = "^4.1.0"  # Coverage plugin for pytest
+pytest-cov = "^5.0.0"  # Coverage plugin for pytest
 pre-commit = "^3.6.0"  # Pre-commit hooks for code discipline
 virtualenv = "^20.25.0"  # Virtual environment creation for pre-commit hooks
 pydocstyle = "^6.3.0"  # Pydocstyle for docstring checks
@@ -134,11 +134,6 @@ line-ending = "auto"
 docstring-code-format = true
 docstring-code-line-length = "dynamic"
 
-[tool.pytest.ini_options]
-pythonpath = [
-  "src"
-]
-
 [tool.ruff.lint.isort]
 case-sensitive = false
 combine-as-imports = true
@@ -150,3 +145,34 @@ lines-after-imports = 2
 lines-between-types = 0
 section-order = ["future", "standard-library", "third-party", "first-party", "local-folder"]
 split-on-trailing-comma = true
+
+[tool.pytest.ini_options]
+pythonpath = [
+  "src"
+]
+testpaths = [
+    "tests",
+    "integration",
+]
+markers = [
+    "slow: marks tests as slow (deselect with '-m \"not slow\"')",
+    "dpp: marks tests for data pre-processing (deselect with '-m \"not dpp\"')",
+]
+
+[tool.coverage.run]
+omit = [
+    "*/__init__.py",
+    "*/tests/*",
+    "*/test_*.py",
+]
+
+[tool.coverage.report]
+exclude_lines = [
+    "pragma: no cover",
+    "def __repr__",
+    "if self.debug:",
+    "if __name__ == .__main__.:",
+    "raise NotImplementedError",
+    "pass",
+    "except ImportError:",
+]
