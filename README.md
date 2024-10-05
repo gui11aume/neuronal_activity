@@ -166,9 +166,25 @@ These resources provide comprehensive guides on setting up and using the debugge
 
 # Code Discipline 💎
 
-This project uses [pre-commit](https://pre-commit.com/) to enforce code discipline. The pre-commit hooks are configured in the `.pre-commit-config.yaml` file. The commit hooks should be running and up-to-date when you commit. If not, reinstall the dependencies with `make install-dev` or follow the instructions below.
+## Principles of Code Discipline
 
-## Installing the Commit Hooks Manually
+### The XYZ problem
+
+A common issue in software development is known as the [XY problem](https://meta.stackexchange.com/q/66377).
+
+> You are trying to solve problem X, and you think solution Y would work, but instead of asking about X when you run into trouble, you ask about Y.
+
+The lesson to learn from the XY problem is not to focus on Y because you think that Y is the right solution. But there is a more subtle lesson here: you should also not focus on X because you think that X is the right problem.
+
+Code discipline is about addressing the XYZ problem: nobody really knows what the real problems are.
+
+### No Exceptions
+
+Fixing all the issues in a codebase is unrealistic, but the code should behave as expected all the time. The only principle of code discipline is that there should be no exceptions. Any unexpected behavior should be treated as a bug and fixed.
+
+## Pre-commit Hooks
+
+This project uses [pre-commit](https://pre-commit.com/) to enforce code discipline. The pre-commit hooks are configured in the `.pre-commit-config.yaml` file. The commit hooks should be running and up-to-date when you commit. If not, reinstall the dependencies with `make install-dev` or follow the instructions below.
 
 Pre-commit hooks are installed automatically when you run `make install-dev`. If commit hooks are not functioning properly, you can manually install the commit hooks with the following commands:
 
@@ -210,7 +226,6 @@ To run a specific hook on a specific file, you can use the following command:
 ```bash
 pre-commit run <hook-name> --files <file-name>
 ```
-
 
 ## List of Pre-commit Hooks
 
