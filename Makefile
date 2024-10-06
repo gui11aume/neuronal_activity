@@ -55,8 +55,7 @@ test-ci: $(DEV_MARKER)
 		--cov-report=lcov \
 		--cov-report=term \
 		--junitxml=pytest.xml \
-		--func_cov=src/neuronal_activity \
-		--func_cov_report=lcov
+		--func_cov=src/neuronal_activity
 
 # Run a single file (example)
 test-one-file: $(DEV_MARKER)

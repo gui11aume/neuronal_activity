@@ -181,9 +181,9 @@ Code discipline is about addressing the XYZ problem: nobody really knows what th
 ### The Discipline Mindset
 
 1. **Expect Failures**:
-   - You code is broken, you just don't know it yet.
+   - Assume that the code is broken.
 2. **Build Habits**:
-   - Document unexpected behaviors as you find them.
+   - Document unexpected behaviors.
 
 
 ## Pre-commit Hooks
