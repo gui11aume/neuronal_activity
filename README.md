@@ -178,9 +178,13 @@ The lesson to learn from the XY problem is not to focus on Y because you think t
 
 Code discipline is about addressing the XYZ problem: nobody really knows what the real problems are.
 
-### Unexpected Behaviors are Issues
+### The Discipline Mindset
 
-To mitigate the XYZ problem, all unexpected behaviors must be treated as issues. Every exception, odd behavior, unexpected result or running time, edge case, etc. must be documented in a Github issue.
+1. **Expect Failures**:
+   - You code is broken, you just don't know it yet.
+2. **Build Habits**:
+   - Document unexpected behaviors as you find them.
+
 
 ## Pre-commit Hooks
 

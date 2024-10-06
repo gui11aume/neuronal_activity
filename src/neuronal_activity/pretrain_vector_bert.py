@@ -51,6 +51,9 @@ class TrainingConfig:
     optimizer: str = "AdamW"
     optimizer_kwargs: dict[str, Any] = field(default_factory=lambda: {"betas": (0.9, 0.999)})
     accumulate_grad_batches: int = 1
+    # MLM configuration
+    prob_select: float = 0.15
+    prob_mask: float = 0.8
 
 
 @dataclass
@@ -163,14 +166,12 @@ class VectorMLMCollator:
 
     def __init__(
         self,
-        task_1_prob: float = 0.9,
         select_prob: float = 0.15,
         mask_prob: float = 0.8,
     ):
         """Initialize the VectorMLMCollator with task probabilities.
 
         Args:
-            task_1_prob: Probability of performing Task I. Defaults to 0.9.
             select_prob: Probability of selecting a token for masking. Defaults to 0.15.
             mask_prob: Probability of masking a selected token. Defaults to 0.8.
 
@@ -178,9 +179,8 @@ class VectorMLMCollator:
             ValueError: If any probability is not between 0 and 1.
 
         """
-        if not all(0 <= prob <= 1 for prob in [task_1_prob, select_prob, mask_prob]):
+        if not all(0 <= prob <= 1 for prob in [select_prob, mask_prob]):
             raise ValueError("All probabilities must be between 0 and 1.")
-        self.task_1_prob: float = task_1_prob
         self.select_prob: float = select_prob
         self.mask_prob: float = mask_prob
 
@@ -203,69 +203,47 @@ class VectorMLMCollator:
         padding_mask = padded[:, :, 0] != -666.0  # noqa: PLR2004
         inputs = padded.clone()
 
-        # Run Task I with probability `task_1_prob` and Task II with
-        # probability `1 - task_1_prob`.
-        if torch.rand(1).item() < self.task_1_prob:
-            # Task I: Standard Masked Language Model
-            # 1. Select tokens with probability `select_prob`.
-            # 2. For selected tokens:
-            #    - Replace with 0 (mask) with probability `mask_prob`
-            #    - Replace with random token with probability `(1 - mask_prob) / 2`
-            #    - Keep unchanged with probability `(1 - mask_prob) / 2`
+        # 1. Select tokens with probability `select_prob`.
+        # 2. For selected tokens:
+        #    - Replace with 0 (mask) with probability `mask_prob`
+        #    - Replace with random token with probability `(1 - mask_prob) / 2`
+        #    - Keep unchanged with probability `(1 - mask_prob) / 2`
 
-            # Select tokens (excluding padded ones)
-            select_prob = torch.full(inputs.shape[:-1], self.select_prob) * padding_mask
-            selected = torch.bernoulli(select_prob).to(torch.bool)
+        # Select tokens (excluding padded ones)
+        select_prob = torch.full(inputs.shape[:-1], self.select_prob) * padding_mask
+        selected = torch.bernoulli(select_prob).to(torch.bool)
 
-            # Create probability distribution for token replacement
-            prob_distribution = torch.tensor(
-                [
-                    self.mask_prob,  # Mask with 0
-                    (1 - self.mask_prob) / 2,  # Replace with random token
-                    (1 - self.mask_prob) / 2,  # Keep as is
-                ],
-                dtype=torch.float32,
-            )
-            action_prob = prob_distribution.repeat(selected.shape[0], 1)
+        # Create probability distribution for token replacement
+        prob_distribution = torch.tensor(
+            [
+                self.mask_prob,  # Mask with 0
+                (1 - self.mask_prob) / 2,  # Replace with random token
+                (1 - self.mask_prob) / 2,  # Keep as is
+            ],
+            dtype=torch.float32,
+        )
+        action_prob = prob_distribution.repeat(selected.shape[0], 1)
 
-            # Determine action for each selected token
-            action = torch.multinomial(action_prob, num_samples=selected.shape[1], replacement=True)
+        # Determine action for each selected token
+        action = torch.multinomial(action_prob, num_samples=selected.shape[1], replacement=True)
 
-            # Apply masking (replace with 0)
-            inputs[selected & (action == 0)] = 0
+        # Apply masking (replace with 0)
+        inputs[selected & (action == 0)] = 0
 
-            # Apply randomization (replace with random token)
-            valid_indices = torch.flatten(torch.nonzero(padding_mask.view(-1)))
-            num_replacements = int((selected & (action == 1)).sum())
-            random_indices = valid_indices[
-                torch.randint(
-                    low=0,
-                    high=valid_indices.size(0),
-                    size=[num_replacements],
-                    dtype=torch.int64,
-                ),
-            ]
-            inputs[selected & (action == 1)] = padded.view(-1, padded.shape[-1])[random_indices]
+        # Apply randomization (replace with random token)
+        valid_indices = torch.flatten(torch.nonzero(padding_mask.view(-1)))
+        num_replacements = int((selected & (action == 1)).sum())
+        random_indices = valid_indices[
+            torch.randint(
+                low=0,
+                high=valid_indices.size(0),
+                size=[num_replacements],
+                dtype=torch.int64,
+            ),
+        ]
+        inputs[selected & (action == 1)] = padded.view(-1, padded.shape[-1])[random_indices]
 
-            # Tokens where action == 2 are kept unchanged
-        else:
-            # Task II: Mask some entries at all time steps
-            # 1. Select entire rows (channels) for masking
-            # 2. Mask a portion of the selected rows
-            # 3. Preserve padding and update selection mask
-
-            # 1. Select entire rows (channels) for masking
-            row_selection_prob = torch.full((inputs.shape[0], 1, inputs.shape[2]), 0.5)
-            selected_rows = torch.bernoulli(row_selection_prob).to(torch.bool).expand_as(inputs)
-
-            # 2. Mask a portion of the selected rows
-            mask_prob = torch.full(inputs.shape, 0.5)
-            selected_cells = selected_rows & torch.bernoulli(mask_prob).to(torch.bool)
-            inputs[selected_cells] = 0
-
-            # 3. Preserve padding and update selection mask
-            inputs[padded == -666.0] = -666.0  # noqa: PLR2004
-            selected = padding_mask  # Use padding mask for loss computation
+        # Tokens where action == 2 are kept unchanged
 
         return {
             "inputs": inputs,
@@ -406,7 +384,10 @@ class TrainHarness(pl.LightningModule):
             dataset=self.train_data,
             batch_size=self.hparams.batch_size,
             shuffle=True,
-            collate_fn=VectorMLMCollator(),
+            collate_fn=VectorMLMCollator(
+                select_prob=self.hparams.prob_select,
+                mask_prob=self.hparams.prob_mask,
+            ),
             num_workers=0 if DEBUG else 8,
             persistent_workers=not DEBUG,
             pin_memory=not DEBUG,
@@ -423,7 +404,10 @@ class TrainHarness(pl.LightningModule):
             dataset=self.val_data,
             batch_size=self.hparams.batch_size,
             shuffle=False,
-            collate_fn=VectorMLMCollator(),
+            collate_fn=VectorMLMCollator(
+                select_prob=self.hparams.prob_select,
+                mask_prob=self.hparams.prob_mask,
+            ),
             num_workers=0 if DEBUG else 8,
             persistent_workers=not DEBUG,
             pin_memory=not DEBUG,
@@ -504,6 +488,7 @@ class TrainHarness(pl.LightningModule):
             logger=True,
             sync_dist=True,
         )
+        return loss
 
 
 if __name__ == "__main__":

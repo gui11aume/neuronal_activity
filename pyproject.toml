@@ -23,6 +23,8 @@ safetensors = "^0.4.1"  # Efficient and safe tensor serialization
 ruff = "^0.6.8"  # Fast Python linter and formatter
 pytest = "^7.4.0"  # Testing framework
 pytest-cov = "^5.0.0"  # Coverage plugin for pytest
+pytest-func-cov = "^0.2.3"  # Function coverage plugin for pytest
+pytest-benchmark = "^4.0.0"  # Benchmark plugin for pytest
 pre-commit = "^3.6.0"  # Pre-commit hooks for code discipline
 virtualenv = "^20.25.0"  # Virtual environment creation for pre-commit hooks
 pydocstyle = "^6.3.0"  # Pydocstyle for docstring checks
@@ -156,7 +158,9 @@ testpaths = [
 ]
 markers = [
     "slow: marks tests as slow (deselect with '-m \"not slow\"')",
+    "bnechmark: marks tests as benchmark (deselect with '-m \"not benchmark\"')",
     "dpp: marks tests for data pre-processing (deselect with '-m \"not dpp\"')",
+    "gpu: marks tests using a GPU (deselect with '-m \"not gpu\"')",
 ]
 
 [tool.coverage.run]
