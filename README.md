@@ -314,9 +314,10 @@ git diff HEAD > patch.patch
 
 Then reference the patch file with @patch.patch in the prompt to write a good commit message:
 
-```
+````markdown
 Analyze the output of `git diff HEAD` in @patch.patch and craft a concise, informative commit message for the changes. Ensure the message is clear and informative for future readers who may not be familiar with the current context. Follow these guidelines: 1. Start with a summary line of at most 50 characters, written in the present tense. 2. Do not begin the summary with 'feat:', 'fix:', or any other prefixes. 3. Capitalize the first word of the summary. 4. Do not end the summary line with a period. 5. After the summary, add a blank line followed by a more detailed description if necessary. 6. In the detailed description, explain the 'what' and 'why' of the changes, not the 'how'. 7. Wrap the detailed description at 72 characters. 8. Use bullet points for multiple distinct changes.
 Example format:
+```
 Summary of changes (50 chars or fewer)
 
 More detailed explanation of the changes, wrapped at
@@ -324,7 +325,8 @@ More detailed explanation of the changes, wrapped at
 and contrast it with previous behavior.
  - Bullet point for distinct change 1
  - Bullet point for distinct change 2
-```
+ ```
+````
 
 
 ### Docstrings

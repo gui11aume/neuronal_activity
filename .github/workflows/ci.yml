@@ -28,7 +28,7 @@ jobs:
       uses: hrishikesh-kadam/setup-lcov@v1
 
     - name: Report LCOV
-      uses: gui11aume/github-actions-report-lcov@v4.1.17
+      uses: gui11aume/github-actions-report-lcov@v4.1.18
       with:
         coverage-files: coverage.lcov
         minimum-coverage: 70
