@@ -56,7 +56,7 @@ def harnessed_model() -> TrainHarness:
     val_data = VariableTensorSliceData(torch.randn(9, 256))
     # Use a huge learning rate and no warmup
     train_config = TrainingConfig(lr=0.1, lr_warmup_ratio=0.0, lr_decay_ratio=1.0)
-    return TrainHarness(model, train_data, val_data, train_config=train_config)
+    return TrainHarness(model, train_data, val_data, train_config=train_config, dvc_repo=None)
 
 
 @pytest.fixture
@@ -484,7 +484,7 @@ def test_train_logging(harnessed_model: TrainHarness, tmp_path: Path):
         tmp_path: A temporary directory path for storing logs and checkpoints.
 
     """
-    with patch("logging.warning") as mock_log:
+    with patch("logging.warning"):
         trainer = Trainer(
             default_root_dir=tmp_path,
             max_epochs=1,
@@ -510,8 +510,3 @@ def test_train_logging(harnessed_model: TrainHarness, tmp_path: Path):
             assert "loss" in content, "Loss was not logged"
             assert "lr" in content, "Learning rate was not logged"
             assert "val_loss" in content, "Validation loss was not logged"
-
-        assert any(
-            "Failed to add model summary to DVC." in msg
-            for msg in [call.args[0] for call in mock_log.call_args_list]
-        ), "Expected 'Failed to add model summary to DVC.' message was not logged"

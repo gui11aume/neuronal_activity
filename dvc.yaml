@@ -5,7 +5,7 @@ stages:
       data/train_tensors.pt
       data/validation_tensors.pt
       models/trained_model_weights.pt
-      train_config.yaml
+      --config train_config.yaml
     deps:
       - data/train_tensors.pt
       - data/validation_tensors.pt
