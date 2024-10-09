@@ -419,11 +419,33 @@ class TrainHarness(pl.LightningModule):
 
     def on_fit_start(self):
         """Initialize DVC tracking and log model summary."""
+        # Log hyperparameters
         self.logger.log_hyperparams(self.hparams)
+
+        # Log number of GPUs (needed for actual batch size)
+        if self.trainer:
+            num_gpus = 0
+            if hasattr(self.trainer.strategy, "device_ids"):
+                num_gpus = len(self.trainer.strategy.device_ids)
+            elif (
+                hasattr(self.trainer.strategy, "root_device")
+                and self.trainer.strategy.root_device.type == "cuda"
+            ):
+                num_gpus = 1
+            self.logger.log_hyperparams({"num_gpus": num_gpus})
+
+        # Save model summary
         path_to_model_summary = os.path.join(self.logger.log_dir, "model_summary.txt")
         os.makedirs(os.path.dirname(path_to_model_summary), exist_ok=True)
         with open(path_to_model_summary, "w") as f:
             f.write(str(self.model))
+
+        # Save current script
+        this_script = os.path.abspath(__file__)
+        path_to_copy = os.path.join(self.logger.log_dir, "script.py")
+        with open(this_script) as source_file, open(path_to_copy, "w") as dest_file:
+            dest_file.write(source_file.read())
+
         if self.dvc_repo is not None:
             try:
                 repo = self.dvc_repo.repo
@@ -431,9 +453,9 @@ class TrainHarness(pl.LightningModule):
                 logging.warning("Not a DVC repository.")
                 return
             try:
-                repo.add(path_to_model_summary)
+                repo.add(self.logger.log_dir)
             except dvc.stage.exceptions.StageExternalOutputsError:
-                logging.warning("Failed to add model summary to DVC.")
+                logging.warning("Failed to add hyperparameters to DVC.")
 
     def forward_loss(self, batch: dict[str, torch.Tensor]) -> torch.Tensor:
         """Compute forward pass and loss.

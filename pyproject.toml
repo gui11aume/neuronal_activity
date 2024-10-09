@@ -104,7 +104,7 @@ select = [
     "ERA",  # eradicate
     "PL",  # pylint
 ]
-ignore = []  # Ignore specific error codes
+ignore = ["COM812"]  # Ignore specific error codes
 
 # Allow autofix for all enabled rules (when `--fix`) is provided.
 fixable = ["A", "B", "C", "D", "E", "F", "I", "W", "Q", "COM"]

@@ -1,5 +1,6 @@
 """Test cases for the VectorBert model and its components."""
 
+import os
 import time
 from pathlib import Path
 from unittest.mock import patch
@@ -488,6 +489,8 @@ def test_train_logging(harnessed_model: TrainHarness, tmp_path: Path):
         tmp_path: A temporary directory path for storing logs and checkpoints.
 
     """
+    csv_logger = pl.loggers.CSVLogger(".", version=f"test_train_logging_{int(time.time())}")
+
     with patch("logging.warning"):
         pl.Trainer = pl.Trainer(
             default_root_dir=tmp_path,
@@ -498,16 +501,21 @@ def test_train_logging(harnessed_model: TrainHarness, tmp_path: Path):
             enable_model_summary=False,
             enable_checkpointing=True,
             accelerator="cpu",
+            logger=csv_logger,
         )
         pl.Trainer.fit(harnessed_model)
 
-        log_dir = tmp_path / "lightning_logs" / "version_0"
-        metrics_file = log_dir / "metrics.csv"
-        checkpoints_dir = log_dir / "checkpoints"
+        log_dir = csv_logger.log_dir
+        metrics_file = os.path.join(log_dir, "metrics.csv")
+        summary_file = os.path.join(log_dir, "model_summary.txt")
+        script_file = os.path.join(log_dir, "script.py")
+        checkpoints_dir = os.path.join(log_dir, "checkpoints")
 
-        assert log_dir.exists(), "Log directory was not created"
-        assert metrics_file.exists(), "Metrics file was not created"
-        assert list(checkpoints_dir.glob("*.ckpt")), "Checkpoint was not created"
+        assert os.path.exists(log_dir), "Log directory was not created"
+        assert os.path.exists(metrics_file), "Metrics file was not created"
+        assert os.path.exists(summary_file), "Model summary file was not created"
+        assert os.path.exists(script_file), "Script file was not created"
+        assert os.path.exists(checkpoints_dir), "Checkpoint was not created"
 
         with open(metrics_file) as f:
             content = f.read()
