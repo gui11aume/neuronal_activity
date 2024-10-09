@@ -47,9 +47,15 @@ train: install
 test: $(DEV_MARKER)
 	$(POETRY) run pytest tests/
 
-# Run tests using pytest and generate XML report
+# Run tests using pytest and generate reports
 test-ci: $(DEV_MARKER)
-	$(POETRY) run pytest tests/ --cov=./ --cov-report=lcov --cov-report=term --junitxml=pytest.xml
+	$(POETRY) run pytest tests/ $(ARGS) \
+		--cov=src \
+		--cov-branch \
+		--cov-report=term \
+		--cov-report=term-missing \
+		--cov-report=lcov:coverage.lcov \
+		--junitxml=pytest.xml \
 
 # Run a single file (example)
 test-one-file: $(DEV_MARKER)

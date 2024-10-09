@@ -21,14 +21,14 @@ jobs:
       uses: ./.github/actions/setup-env
 
     - name: Run tests
-      run: make test-ci
+      run: make test-ci ARGS="-m \"not gpu\""
       id: run-tests
 
     - name: Setup LCOV
       uses: hrishikesh-kadam/setup-lcov@v1
 
     - name: Report LCOV
-      uses: zgosalvez/github-actions-report-lcov@v4.1.16
+      uses: gui11aume/github-actions-report-lcov@v4.1.18
       with:
         coverage-files: coverage.lcov
         minimum-coverage: 70
