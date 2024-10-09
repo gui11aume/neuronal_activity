@@ -6,9 +6,10 @@ using PyTorch Lightning. It also provides utilities for configuration management
 and DVC integration for experiment tracking.
 """
 
+import argparse
+import datetime
 import logging
 import os
-import sys
 import warnings
 from dataclasses import asdict, dataclass, field
 from typing import Any
@@ -318,6 +319,7 @@ class TrainHarness(pl.LightningModule):
         train_data: VariableTensorSliceData,
         val_data: VariableTensorSliceData,
         train_config: TrainingConfig,
+        dvc_repo: dvc.repo.Repo | None = None,
     ):
         """Initialize the TrainHarness.
 
@@ -326,6 +328,7 @@ class TrainHarness(pl.LightningModule):
             train_data: Training data.
             val_data: Validation data.
             train_config: Training configuration.
+            dvc_repo: DVC repository object.
 
         """
         super().__init__()
@@ -335,6 +338,7 @@ class TrainHarness(pl.LightningModule):
         self.val_output_list: list[torch.Tensor] = []
         # Save all attributes of `train_config` as hparams
         self.save_hyperparameters(asdict(train_config))
+        self.dvc_repo = dvc_repo
 
     def configure_optimizers(self) -> tuple[list[torch.optim.Optimizer], list[dict[str, Any]]]:
         """Configure optimizers and learning rate schedulers.
@@ -420,15 +424,16 @@ class TrainHarness(pl.LightningModule):
         os.makedirs(os.path.dirname(path_to_model_summary), exist_ok=True)
         with open(path_to_model_summary, "w") as f:
             f.write(str(self.model))
-        try:
-            repo = dvc.repo.Repo()
-        except dvc.exceptions.NotDvcRepoError:
-            logging.warning("No DVC tracking")
-            return
-        try:
-            repo.add(path_to_model_summary)
-        except dvc.stage.exceptions.StageExternalOutputsError:
-            logging.warning("Failed to add model summary to DVC.")
+        if self.dvc_repo is not None:
+            try:
+                repo = self.dvc_repo.repo
+            except dvc.exceptions.NotDvcRepoError:
+                logging.warning("Not a DVC repository.")
+                return
+            try:
+                repo.add(path_to_model_summary)
+            except dvc.stage.exceptions.StageExternalOutputsError:
+                logging.warning("Failed to add model summary to DVC.")
 
     def forward_loss(self, batch: dict[str, torch.Tensor]) -> torch.Tensor:
         """Compute forward pass and loss.
@@ -495,12 +500,26 @@ if __name__ == "__main__":
     pl.seed_everything(123)
     torch.set_float32_matmul_precision("high")
 
-    repo: dvc.repo.Repo = dvc.repo.Repo(".")
+    parser = argparse.ArgumentParser(description="Train VectorBert model")
+    parser.add_argument("train_data_path", type=str, help="Path to training data")
+    parser.add_argument("val_data_path", type=str, help="Path to validation data")
+    parser.add_argument("trained_weights_path", type=str, help="Path to save trained weights")
+    parser.add_argument("--config", type=str, help="Path to configuration file", default=None)
+    parser.add_argument("--no-dvc", action="store_true", help="Disable DVC tracking")
+    args = parser.parse_args()
 
-    train_data_path: str = sys.argv[1]
-    val_data_path: str = sys.argv[2]
-    trained_weights_path: str = sys.argv[3]
-    config_path: str | None = sys.argv[4] if len(sys.argv) > 4 else None  # noqa: PLR2004
+    # Set up DVC tracking
+    dvc_repo: dvc.repo.Repo | None = None
+    if not args.no_dvc:
+        try:
+            dvc_repo = dvc.repo.Repo()
+        except dvc.exceptions.NotDvcRepoError:
+            logging.warning("No DVC repo found. DVC tracking will be disabled.")
+
+    train_data_path: str = args.train_data_path
+    val_data_path: str = args.val_data_path
+    trained_weights_path: str = args.trained_weights_path
+    config_path: str | None = args.config if args.config else None
 
     train_config: TrainingConfig = load_config(config_path)
 
@@ -531,11 +550,20 @@ if __name__ == "__main__":
         train_data,
         val_data,
         train_config=train_config,
+        dvc_repo=dvc_repo,
     )
 
     early_stop_callback: EarlyStopping = EarlyStopping(monitor="val_loss", patience=3, mode="min")
 
-    csv_logger: pl.loggers.CSVLogger = pl.loggers.CSVLogger(".")
+    def custom_version():
+        """Get a custom version for the CSV logger."""
+        date = datetime.datetime.now().strftime("%Y%m%d")
+        run_number = 1
+        while os.path.exists(f"lightning_logs/{date}_{run_number:03d}"):
+            run_number += 1
+        return f"{date}_{run_number:03d}"
+
+    csv_logger: pl.loggers.CSVLogger = pl.loggers.CSVLogger(".", version=custom_version())
     csv_log_dir: str = csv_logger.log_dir
 
     checkpoint_callback: ModelCheckpoint = ModelCheckpoint(
@@ -577,6 +605,12 @@ if __name__ == "__main__":
     trainer.save_checkpoint(f"{trained_weights_path}.ckpt")
     save_file(model.state_dict(), trained_weights_path)
 
-    # Commit artifacts
-    repo.scm.add([trained_weights_path, csv_log_dir])
-    repo.scm.commit(f"Train VectorBert model -- {generate_codename()}")
+    # Commit artifacts to DVC
+    if dvc_repo is not None:
+        try:
+            dvc_repo.scm.add([trained_weights_path, csv_log_dir])
+            dvc_repo.scm.commit(f"Train VectorBert model -- {generate_codename()}")
+        except Exception as e:
+            logging.warning(f"Failed to commit artifacts to DVC: {e}")
+    else:
+        logging.info("DVC tracking is disabled. Results are not tracked.")

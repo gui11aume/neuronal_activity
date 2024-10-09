@@ -56,7 +56,7 @@ def harnessed_model() -> TrainHarness:
     val_data = VariableTensorSliceData(torch.randn(9, 256))
     # Use a huge learning rate and no warmup
     train_config = TrainingConfig(lr=0.1, lr_warmup_ratio=0.0, lr_decay_ratio=1.0)
-    return TrainHarness(model, train_data, val_data, train_config=train_config)
+    return TrainHarness(model, train_data, val_data, train_config=train_config, dvc_repo=None)
 
 
 @pytest.fixture
