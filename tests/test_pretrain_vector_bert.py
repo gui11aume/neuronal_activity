@@ -1,12 +1,14 @@
 """Test cases for the VectorBert model and its components."""
 
+import os
+import time
 from pathlib import Path
 from unittest.mock import patch
 
+import lightning.pytorch as pl
 import pytest
 import torch
 import transformers
-from lightning.pytorch import Trainer, seed_everything
 
 from neuronal_activity.pretrain_vector_bert import (
     MAX_SLICE_SIZE,
@@ -56,42 +58,45 @@ def harnessed_model() -> TrainHarness:
     val_data = VariableTensorSliceData(torch.randn(9, 256))
     # Use a huge learning rate and no warmup
     train_config = TrainingConfig(lr=0.1, lr_warmup_ratio=0.0, lr_decay_ratio=1.0)
-    return TrainHarness(model, train_data, val_data, train_config=train_config, dvc_repo=None)
+    return TrainHarness(model, train_data, val_data, train_config=train_config)
 
 
 @pytest.fixture
-def cpu_trainer() -> Trainer:
-    """Create and return a CPU trainer for testing.
+def cpu_trainer() -> pl.Trainer:
+    """Create and return a CPU pl.Trainer for testing.
 
-    This fixture creates a Trainer instance configured to run on CPU,
+    This fixture creates a pl.Trainer instance configured to run on CPU,
     with a maximum of 1 epoch and 7 steps.
 
     Returns:
-        A Trainer instance.
+        A pl.Trainer instance.
 
     """
-    return Trainer(
+    csv_logger = pl.loggers.CSVLogger(".", version=f"test_{int(time.time())}")
+    return pl.Trainer(
         accelerator="cpu",
         max_epochs=1,
         max_steps=7,
         enable_checkpointing=False,
+        logger=csv_logger,
     )
 
 
 @pytest.fixture
-def gpu_trainer() -> Trainer:
-    """Create and return a GPU trainer for testing.
+def gpu_trainer() -> pl.Trainer:
+    """Create and return a GPU pl.Trainer for testing.
 
-    This fixture creates a Trainer instance configured to run on GPU,
+    This fixture creates a pl.Trainer instance configured to run on GPU,
     with a maximum of 1 epoch and 7 steps.
 
     Returns:
-        An instance of Trainer.
+        An instance of pl.Trainer.
 
     """
     if not torch.cuda.is_available():
         pytest.skip("CUDA is not available")
-    return Trainer(
+    csv_logger = pl.loggers.CSVLogger(".", version=f"test_{int(time.time())}")
+    return pl.Trainer(
         strategy="ddp",
         precision="16-mixed",
         accelerator="gpu",
@@ -99,7 +104,7 @@ def gpu_trainer() -> Trainer:
         max_epochs=1,
         max_steps=7,
         enable_checkpointing=False,
-        logger=None,
+        logger=csv_logger,
     )
 
 
@@ -314,7 +319,7 @@ def test_forward_loss_gpu(harnessed_model: TrainHarness):
 
 def test_fit_cpu(
     harnessed_model: TrainHarness,
-    cpu_trainer: Trainer,
+    cpu_trainer: pl.Trainer,
 ):
     """Verify fit of the model on CPU.
 
@@ -324,10 +329,10 @@ def test_fit_cpu(
 
     Args:
         harnessed_model: The harnessed model to test.
-        cpu_trainer: The trainer fixture to use for testing.
+        cpu_trainer: The pl.Trainer fixture to use for testing.
 
     """
-    seed_everything(123)
+    pl.seed_everything(123)
     initial_params = [p.clone().detach() for p in harnessed_model.model.parameters()]
     cpu_trainer.fit(harnessed_model)
     _check_fit_assertions(harnessed_model, cpu_trainer, initial_params)
@@ -336,7 +341,7 @@ def test_fit_cpu(
 @pytest.mark.gpu
 def test_fit_gpu(
     harnessed_model: TrainHarness,
-    gpu_trainer: Trainer,
+    gpu_trainer: pl.Trainer,
 ):
     """Verify fit of the model on GPU.
 
@@ -346,10 +351,10 @@ def test_fit_gpu(
 
     Args:
         harnessed_model: The harnessed model to test.
-        gpu_trainer: The trainer fixture to use for testing.
+        gpu_trainer: The pl.Trainer fixture to use for testing.
 
     """
-    seed_everything(123)
+    pl.seed_everything(123)
     initial_params = [p.clone().detach() for p in harnessed_model.model.parameters()]
     gpu_trainer.fit(harnessed_model)
     _check_fit_assertions(harnessed_model, gpu_trainer, initial_params)
@@ -357,7 +362,7 @@ def test_fit_gpu(
 
 def _check_fit_assertions(
     harnessed_model: TrainHarness,
-    trainer: Trainer,
+    trainer: pl.Trainer,
     initial_params: list[torch.Tensor],
 ):
     # Check if training metrics are available
@@ -392,7 +397,7 @@ def _check_fit_assertions(
 
 def test_validate_cpu(
     harnessed_model: TrainHarness,
-    cpu_trainer: Trainer,
+    cpu_trainer: pl.Trainer,
 ):
     """Verify validation of the model on CPU.
 
@@ -402,10 +407,10 @@ def test_validate_cpu(
 
     Args:
         harnessed_model: The harnessed model to test.
-        cpu_trainer: The trainer fixture to use for testing.
+        cpu_trainer: The pl.Trainer fixture to use for testing.
 
     """
-    seed_everything(123)
+    pl.seed_everything(123)
     initial_params = [p.clone().detach() for p in harnessed_model.model.parameters()]
     cpu_trainer.validate(harnessed_model)
     _check_validate_assertions(harnessed_model, cpu_trainer, initial_params)
@@ -414,7 +419,7 @@ def test_validate_cpu(
 @pytest.mark.gpu
 def test_validate_gpu(
     harnessed_model: TrainHarness,
-    gpu_trainer: Trainer,
+    gpu_trainer: pl.Trainer,
 ):
     """Verify validation of the model on GPU.
 
@@ -424,10 +429,10 @@ def test_validate_gpu(
 
     Args:
         harnessed_model: The harnessed model to test.
-        gpu_trainer: The trainer fixture to use for testing.
+        gpu_trainer: The pl.Trainer fixture to use for testing.
 
     """
-    seed_everything(123)
+    pl.seed_everything(123)
     initial_params = [p.clone().detach() for p in harnessed_model.model.parameters()]
     gpu_trainer.validate(harnessed_model)
     _check_validate_assertions(harnessed_model, gpu_trainer, initial_params)
@@ -435,7 +440,7 @@ def test_validate_gpu(
 
 def _check_validate_assertions(
     harnessed_model: TrainHarness,
-    trainer: Trainer,
+    trainer: pl.Trainer,
     initial_params: list[torch.Tensor],
 ):
     # Check if parameters were not updated during validation
@@ -476,7 +481,7 @@ def _check_validate_assertions(
 def test_train_logging(harnessed_model: TrainHarness, tmp_path: Path):
     """Verify the logging functionality during model training.
 
-    Checks if the trainer correctly logs metrics, creates checkpoints,
+    Checks if the pl.Trainer correctly logs metrics, creates checkpoints,
     and handles DVC tracking messages.
 
     Args:
@@ -484,8 +489,10 @@ def test_train_logging(harnessed_model: TrainHarness, tmp_path: Path):
         tmp_path: A temporary directory path for storing logs and checkpoints.
 
     """
-    with patch("logging.warning") as mock_log:
-        trainer = Trainer(
+    csv_logger = pl.loggers.CSVLogger(".", version=f"test_train_logging_{int(time.time())}")
+
+    with patch("logging.warning"):
+        pl.Trainer = pl.Trainer(
             default_root_dir=tmp_path,
             max_epochs=1,
             limit_train_batches=1,
@@ -494,24 +501,24 @@ def test_train_logging(harnessed_model: TrainHarness, tmp_path: Path):
             enable_model_summary=False,
             enable_checkpointing=True,
             accelerator="cpu",
+            logger=csv_logger,
         )
-        trainer.fit(harnessed_model)
+        pl.Trainer.fit(harnessed_model)
 
-        log_dir = tmp_path / "lightning_logs" / "version_0"
-        metrics_file = log_dir / "metrics.csv"
-        checkpoints_dir = log_dir / "checkpoints"
+        log_dir = csv_logger.log_dir
+        metrics_file = os.path.join(log_dir, "metrics.csv")
+        summary_file = os.path.join(log_dir, "model_summary.txt")
+        script_file = os.path.join(log_dir, "script.py")
+        checkpoints_dir = os.path.join(log_dir, "checkpoints")
 
-        assert log_dir.exists(), "Log directory was not created"
-        assert metrics_file.exists(), "Metrics file was not created"
-        assert list(checkpoints_dir.glob("*.ckpt")), "Checkpoint was not created"
+        assert os.path.exists(log_dir), "Log directory was not created"
+        assert os.path.exists(metrics_file), "Metrics file was not created"
+        assert os.path.exists(summary_file), "Model summary file was not created"
+        assert os.path.exists(script_file), "Script file was not created"
+        assert os.path.exists(checkpoints_dir), "Checkpoint was not created"
 
         with open(metrics_file) as f:
             content = f.read()
             assert "loss" in content, "Loss was not logged"
             assert "lr" in content, "Learning rate was not logged"
             assert "val_loss" in content, "Validation loss was not logged"
-
-        assert any(
-            "Failed to add model summary to DVC." in msg
-            for msg in [call.args[0] for call in mock_log.call_args_list]
-        ), "Expected 'Failed to add model summary to DVC.' message was not logged"

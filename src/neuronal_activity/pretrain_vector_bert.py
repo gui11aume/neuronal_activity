@@ -2,19 +2,16 @@
 
 VectorBert is a BERT-based model adapted for processing vector data. The module
 includes classes for data handling, model architecture, and training pipeline
-using PyTorch Lightning. It also provides utilities for configuration management
-and DVC integration for experiment tracking.
+using PyTorch Lightning.
 """
 
 import argparse
 import datetime
-import logging
 import os
 import warnings
 from dataclasses import asdict, dataclass, field
 from typing import Any
 
-import dvc.api
 import lightning.pytorch as pl
 import torch
 import transformers
@@ -23,8 +20,6 @@ from lightning.pytorch.callbacks import EarlyStopping, ModelCheckpoint
 from lightning.pytorch.tuner import Tuner
 from safetensors.torch import save_file
 from torch import Tensor, jit, optim
-
-from neuronal_activity.utils import generate_codename
 
 
 DEBUG = False
@@ -167,23 +162,23 @@ class VectorMLMCollator:
 
     def __init__(
         self,
-        select_prob: float = 0.15,
-        mask_prob: float = 0.8,
+        prob_select: float = 0.15,
+        prob_mask: float = 0.8,
     ):
         """Initialize the VectorMLMCollator with task probabilities.
 
         Args:
-            select_prob: Probability of selecting a token for masking. Defaults to 0.15.
-            mask_prob: Probability of masking a selected token. Defaults to 0.8.
+            prob_select: Probability of selecting a token for masking. Defaults to 0.15.
+            prob_mask: Probability of masking a selected token. Defaults to 0.8.
 
         Raises:
             ValueError: If any probability is not between 0 and 1.
 
         """
-        if not all(0 <= prob <= 1 for prob in [select_prob, mask_prob]):
+        if not all(0 <= prob <= 1 for prob in [prob_select, prob_mask]):
             raise ValueError("All probabilities must be between 0 and 1.")
-        self.select_prob: float = select_prob
-        self.mask_prob: float = mask_prob
+        self.prob_select: float = prob_select
+        self.prob_mask: float = prob_mask
 
     def __call__(self, examples: list[Tensor]) -> dict[str, Tensor]:
         """Prepare data for Vector Masked Language Modeling tasks.
@@ -204,22 +199,22 @@ class VectorMLMCollator:
         padding_mask = padded[:, :, 0] != -666.0  # noqa: PLR2004
         inputs = padded.clone()
 
-        # 1. Select tokens with probability `select_prob`.
+        # 1. Select tokens with probability `prob_select`.
         # 2. For selected tokens:
-        #    - Replace with 0 (mask) with probability `mask_prob`
-        #    - Replace with random token with probability `(1 - mask_prob) / 2`
-        #    - Keep unchanged with probability `(1 - mask_prob) / 2`
+        #    - Replace with 0 (mask) with probability `prob_mask`
+        #    - Replace with random token with probability `(1 - prob_mask) / 2`
+        #    - Keep unchanged with probability `(1 - prob_mask) / 2`
 
         # Select tokens (excluding padded ones)
-        select_prob = torch.full(inputs.shape[:-1], self.select_prob) * padding_mask
-        selected = torch.bernoulli(select_prob).to(torch.bool)
+        prob_select = torch.full(inputs.shape[:-1], self.prob_select) * padding_mask
+        selected = torch.bernoulli(prob_select).to(torch.bool)
 
         # Create probability distribution for token replacement
         prob_distribution = torch.tensor(
             [
-                self.mask_prob,  # Mask with 0
-                (1 - self.mask_prob) / 2,  # Replace with random token
-                (1 - self.mask_prob) / 2,  # Keep as is
+                self.prob_mask,  # Mask with 0
+                (1 - self.prob_mask) / 2,  # Replace with random token
+                (1 - self.prob_mask) / 2,  # Keep as is
             ],
             dtype=torch.float32,
         )
@@ -319,7 +314,6 @@ class TrainHarness(pl.LightningModule):
         train_data: VariableTensorSliceData,
         val_data: VariableTensorSliceData,
         train_config: TrainingConfig,
-        dvc_repo: dvc.repo.Repo | None = None,
     ):
         """Initialize the TrainHarness.
 
@@ -328,7 +322,6 @@ class TrainHarness(pl.LightningModule):
             train_data: Training data.
             val_data: Validation data.
             train_config: Training configuration.
-            dvc_repo: DVC repository object.
 
         """
         super().__init__()
@@ -338,7 +331,6 @@ class TrainHarness(pl.LightningModule):
         self.val_output_list: list[torch.Tensor] = []
         # Save all attributes of `train_config` as hparams
         self.save_hyperparameters(asdict(train_config))
-        self.dvc_repo = dvc_repo
 
     def configure_optimizers(self) -> tuple[list[torch.optim.Optimizer], list[dict[str, Any]]]:
         """Configure optimizers and learning rate schedulers.
@@ -389,8 +381,8 @@ class TrainHarness(pl.LightningModule):
             batch_size=self.hparams.batch_size,
             shuffle=True,
             collate_fn=VectorMLMCollator(
-                select_prob=self.hparams.prob_select,
-                mask_prob=self.hparams.prob_mask,
+                prob_select=self.hparams.prob_select,
+                prob_mask=self.hparams.prob_mask,
             ),
             num_workers=0 if DEBUG else 8,
             persistent_workers=not DEBUG,
@@ -409,8 +401,8 @@ class TrainHarness(pl.LightningModule):
             batch_size=self.hparams.batch_size,
             shuffle=False,
             collate_fn=VectorMLMCollator(
-                select_prob=self.hparams.prob_select,
-                mask_prob=self.hparams.prob_mask,
+                prob_select=self.hparams.prob_select,
+                prob_mask=self.hparams.prob_mask,
             ),
             num_workers=0 if DEBUG else 8,
             persistent_workers=not DEBUG,
@@ -418,22 +410,33 @@ class TrainHarness(pl.LightningModule):
         )
 
     def on_fit_start(self):
-        """Initialize DVC tracking and log model summary."""
+        """Log model summary."""
+        # Log hyperparameters
         self.logger.log_hyperparams(self.hparams)
+
+        # Log number of GPUs (needed for actual batch size)
+        if self.trainer:
+            num_gpus = 0
+            if hasattr(self.trainer.strategy, "device_ids"):
+                num_gpus = len(self.trainer.strategy.device_ids)
+            elif (
+                hasattr(self.trainer.strategy, "root_device")
+                and self.trainer.strategy.root_device.type == "cuda"
+            ):
+                num_gpus = 1
+            self.logger.log_hyperparams({"num_gpus": num_gpus})
+
+        # Save model summary
         path_to_model_summary = os.path.join(self.logger.log_dir, "model_summary.txt")
         os.makedirs(os.path.dirname(path_to_model_summary), exist_ok=True)
         with open(path_to_model_summary, "w") as f:
             f.write(str(self.model))
-        if self.dvc_repo is not None:
-            try:
-                repo = self.dvc_repo.repo
-            except dvc.exceptions.NotDvcRepoError:
-                logging.warning("Not a DVC repository.")
-                return
-            try:
-                repo.add(path_to_model_summary)
-            except dvc.stage.exceptions.StageExternalOutputsError:
-                logging.warning("Failed to add model summary to DVC.")
+
+        # Save current script
+        this_script = os.path.abspath(__file__)
+        path_to_copy = os.path.join(self.logger.log_dir, "script.py")
+        with open(this_script) as source_file, open(path_to_copy, "w") as dest_file:
+            dest_file.write(source_file.read())
 
     def forward_loss(self, batch: dict[str, torch.Tensor]) -> torch.Tensor:
         """Compute forward pass and loss.
@@ -505,16 +508,7 @@ if __name__ == "__main__":
     parser.add_argument("val_data_path", type=str, help="Path to validation data")
     parser.add_argument("trained_weights_path", type=str, help="Path to save trained weights")
     parser.add_argument("--config", type=str, help="Path to configuration file", default=None)
-    parser.add_argument("--no-dvc", action="store_true", help="Disable DVC tracking")
     args = parser.parse_args()
-
-    # Set up DVC tracking
-    dvc_repo: dvc.repo.Repo | None = None
-    if not args.no_dvc:
-        try:
-            dvc_repo = dvc.repo.Repo()
-        except dvc.exceptions.NotDvcRepoError:
-            logging.warning("No DVC repo found. DVC tracking will be disabled.")
 
     train_data_path: str = args.train_data_path
     val_data_path: str = args.val_data_path
@@ -550,7 +544,6 @@ if __name__ == "__main__":
         train_data,
         val_data,
         train_config=train_config,
-        dvc_repo=dvc_repo,
     )
 
     early_stop_callback: EarlyStopping = EarlyStopping(monitor="val_loss", patience=3, mode="min")
@@ -604,13 +597,3 @@ if __name__ == "__main__":
 
     trainer.save_checkpoint(f"{trained_weights_path}.ckpt")
     save_file(model.state_dict(), trained_weights_path)
-
-    # Commit artifacts to DVC
-    if dvc_repo is not None:
-        try:
-            dvc_repo.scm.add([trained_weights_path, csv_log_dir])
-            dvc_repo.scm.commit(f"Train VectorBert model -- {generate_codename()}")
-        except Exception as e:
-            logging.warning(f"Failed to commit artifacts to DVC: {e}")
-    else:
-        logging.info("DVC tracking is disabled. Results are not tracked.")

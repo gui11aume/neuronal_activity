@@ -2,5 +2,5 @@ batch_size: 1536
 max_epochs: 20
 lr: 1e-4
 # MLM configuration
-select_prob: 0.15
-mask_prob: 0.8
+prob_select: 0.15
+prob_mask: 0.8
