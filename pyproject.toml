@@ -22,7 +22,8 @@ safetensors = "^0.4.1"  # Efficient and safe tensor serialization
 [tool.poetry.group.dev.dependencies]
 ruff = "^0.6.8"  # Fast Python linter and formatter
 pytest = "^7.4.0"  # Testing framework
-pytest-cov = "^4.1.0"  # Coverage plugin for pytest
+pytest-cov = "^5.0.0"  # Coverage plugin for pytest
+pytest-benchmark = "^4.0.0"  # Benchmark plugin for pytest
 pre-commit = "^3.6.0"  # Pre-commit hooks for code discipline
 virtualenv = "^20.25.0"  # Virtual environment creation for pre-commit hooks
 pydocstyle = "^6.3.0"  # Pydocstyle for docstring checks
@@ -103,7 +104,7 @@ select = [
     "ERA",  # eradicate
     "PL",  # pylint
 ]
-ignore = []  # Ignore specific error codes
+ignore = ["COM812"]  # Ignore specific error codes
 
 # Allow autofix for all enabled rules (when `--fix`) is provided.
 fixable = ["A", "B", "C", "D", "E", "F", "I", "W", "Q", "COM"]
@@ -134,11 +135,6 @@ line-ending = "auto"
 docstring-code-format = true
 docstring-code-line-length = "dynamic"
 
-[tool.pytest.ini_options]
-pythonpath = [
-  "src"
-]
-
 [tool.ruff.lint.isort]
 case-sensitive = false
 combine-as-imports = true
@@ -150,3 +146,40 @@ lines-after-imports = 2
 lines-between-types = 0
 section-order = ["future", "standard-library", "third-party", "first-party", "local-folder"]
 split-on-trailing-comma = true
+
+[tool.pytest.ini_options]
+pythonpath = [
+  "src"
+]
+testpaths = [
+    "tests",
+    "integration",
+]
+markers = [
+    "slow: marks tests as slow (deselect with '-m \"not slow\"')",
+    "benchmark: marks tests as benchmark (deselect with '-m \"not benchmark\"')",
+    "dpp: marks tests for data pre-processing (deselect with '-m \"not dpp\"')",
+    "gpu: marks tests using a GPU (deselect with '-m \"not gpu\"')",
+]
+ignore_class_names = [
+    "VectorBertConfig",
+    "TrainingConfig",
+]
+
+[tool.coverage.run]
+omit = [
+    "*/__init__.py",
+    "*/tests/*",
+    "*/test_*.py",
+]
+
+[tool.coverage.report]
+exclude_lines = [
+    "pragma: no cover",
+    "def __repr__",
+    "if self.debug:",
+    "if __name__ == .__main__.:",
+    "raise NotImplementedError",
+    "pass",
+    "except ImportError:",
+]

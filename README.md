@@ -166,9 +166,29 @@ These resources provide comprehensive guides on setting up and using the debugge
 
 # Code Discipline 💎
 
-This project uses [pre-commit](https://pre-commit.com/) to enforce code discipline. The pre-commit hooks are configured in the `.pre-commit-config.yaml` file. The commit hooks should be running and up-to-date when you commit. If not, reinstall the dependencies with `make install-dev` or follow the instructions below.
+## Principles of Code Discipline
 
-## Installing the Commit Hooks Manually
+### The XYZ problem
+
+A common issue in software development is known as the [XY problem](https://meta.stackexchange.com/q/66377).
+
+> You are trying to solve problem X, and you think solution Y would work, but instead of asking about X when you run into trouble, you ask about Y.
+
+The lesson to learn from the XY problem is not to focus on Y because you think that Y is the right solution. But there is a more subtle lesson here: you should also not focus on X because you think that X is the right problem.
+
+Code discipline is about addressing the XYZ problem: nobody really knows what the real problems are.
+
+### The Discipline Mindset
+
+1. **Expect Failures**:
+   - Assume that the code is broken.
+2. **Build Habits**:
+   - Document unexpected behaviors.
+
+
+## Pre-commit Hooks
+
+This project uses [pre-commit](https://pre-commit.com/) to enforce code discipline. The pre-commit hooks are configured in the `.pre-commit-config.yaml` file. The commit hooks should be running and up-to-date when you commit. If not, reinstall the dependencies with `make install-dev` or follow the instructions below.
 
 Pre-commit hooks are installed automatically when you run `make install-dev`. If commit hooks are not functioning properly, you can manually install the commit hooks with the following commands:
 
@@ -210,7 +230,6 @@ To run a specific hook on a specific file, you can use the following command:
 ```bash
 pre-commit run <hook-name> --files <file-name>
 ```
-
 
 ## List of Pre-commit Hooks
 
@@ -295,9 +314,10 @@ git diff HEAD > patch.patch
 
 Then reference the patch file with @patch.patch in the prompt to write a good commit message:
 
-```
+````markdown
 Analyze the output of `git diff HEAD` in @patch.patch and craft a concise, informative commit message for the changes. Ensure the message is clear and informative for future readers who may not be familiar with the current context. Follow these guidelines: 1. Start with a summary line of at most 50 characters, written in the present tense. 2. Do not begin the summary with 'feat:', 'fix:', or any other prefixes. 3. Capitalize the first word of the summary. 4. Do not end the summary line with a period. 5. After the summary, add a blank line followed by a more detailed description if necessary. 6. In the detailed description, explain the 'what' and 'why' of the changes, not the 'how'. 7. Wrap the detailed description at 72 characters. 8. Use bullet points for multiple distinct changes.
 Example format:
+```
 Summary of changes (50 chars or fewer)
 
 More detailed explanation of the changes, wrapped at
@@ -305,7 +325,8 @@ More detailed explanation of the changes, wrapped at
 and contrast it with previous behavior.
  - Bullet point for distinct change 1
  - Bullet point for distinct change 2
-```
+ ```
+````
 
 
 ### Docstrings

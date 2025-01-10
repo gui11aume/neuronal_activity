@@ -1,17 +1,17 @@
 stages:
   train:
     cmd: >
-      python pretrain_VectorBert.py
+      poetry run python src/neuronal_activity/pretrain_vector_bert.py
       data/train_tensors.pt
       data/validation_tensors.pt
-      models/trained_model.pt
-      config.yaml
+      models/trained_model_weights.pt
+      --config train_config.yaml
     deps:
       - data/train_tensors.pt
       - data/validation_tensors.pt
       - config.yaml
     outs:
-      - models/trained_model.pt
+      - models/trained_model_weights.pt
     metrics:
       - lightning_logs/version_*/metrics.csv:
           cache: false

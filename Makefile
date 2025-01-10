@@ -19,11 +19,9 @@ $(VENV): pyproject.toml $(PYTHON_INSTALLED_MARKER)
 
 install: $(VENV)
 	$(POETRY) install --only main
-	$(POETRY) run dvc config core.autostage true
 
 $(DEV_MARKER): $(VENV)
 	$(POETRY) install --with dev
-	$(POETRY) run dvc config core.autostage true
 	touch $(DEV_MARKER)
 
 install-dev: $(DEV_MARKER) $(PRECOMMIT_MARKER)
@@ -39,17 +37,26 @@ clean:
 	find . -type f -name '*.pyc' -delete
 	find . -type d -name '__pycache__' -delete
 
-# Run the training process using DVC, ensuring the setup is completed first
 train: install
-	$(POETRY) run dvc repro
+	$(POETRY) run python src/neuronal_activity/pretrain_vector_bert.py \
+      data/train_tensors.pt \
+      data/validation_tensors.pt \
+      models/trained_model_weights.pt \
+      --config train_config.yaml
 
 # Run tests using pytest
 test: $(DEV_MARKER)
 	$(POETRY) run pytest tests/
 
-# Run tests using pytest and generate XML report
+# Run tests using pytest and generate reports
 test-ci: $(DEV_MARKER)
-	$(POETRY) run pytest tests/ --cov=./ --cov-report=lcov --cov-report=term --junitxml=pytest.xml
+	$(POETRY) run pytest tests/ $(ARGS) \
+		--cov=src \
+		--cov-branch \
+		--cov-report=term \
+		--cov-report=term-missing \
+		--cov-report=lcov:coverage.lcov \
+		--junitxml=pytest.xml \
 
 # Run a single file (example)
 test-one-file: $(DEV_MARKER)

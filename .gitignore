@@ -166,6 +166,7 @@ bandit-report.txt
 
 # Installation and test
 .dev-dependencies-installed
+.pre-commit-installed
 .python-version
 .python-*-installed
 pytest.xml
